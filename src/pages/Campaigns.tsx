@@ -38,13 +38,6 @@ export default function Campaigns() {
 
   if (tier !== 'business') return <Navigate to="/dashboard/billing" replace />;
 
-  useEffect(() => {
-    if (user) {
-      loadCampaigns();
-      loadGroups();
-    }
-  }, [user]);
-
   async function loadCampaigns() {
     const { data } = await supabase.from('email_campaigns').select('*').order('created_at', { ascending: false });
     if (data) setCampaigns(data);

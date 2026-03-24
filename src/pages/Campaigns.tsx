@@ -20,9 +20,6 @@ type MailGroup = Tables<'mail_groups'>;
 export default function Campaigns() {
   const { user, tier } = useAuth();
   const { toast } = useToast();
-
-  if (tier !== 'business') return <Navigate to="/dashboard/billing" replace />;
-
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [groups, setGroups] = useState<MailGroup[]>([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -31,6 +28,15 @@ export default function Campaigns() {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [groupId, setGroupId] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      loadCampaigns();
+      loadGroups();
+    }
+  }, [user]);
+
+  if (tier !== 'business') return <Navigate to="/dashboard/billing" replace />;
 
   useEffect(() => {
     if (user) {

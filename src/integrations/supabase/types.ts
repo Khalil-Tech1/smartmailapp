@@ -14,13 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
-      email_campaigns: {
+      campaign_ab_tests: {
         Row: {
           body: string
+          bounce_count: number | null
+          campaign_id: string
           click_count: number | null
           created_at: string
+          id: string
+          is_winner: boolean | null
+          open_count: number | null
+          sent_count: number | null
+          subject: string
+          variant: string
+        }
+        Insert: {
+          body: string
+          bounce_count?: number | null
+          campaign_id: string
+          click_count?: number | null
+          created_at?: string
+          id?: string
+          is_winner?: boolean | null
+          open_count?: number | null
+          sent_count?: number | null
+          subject: string
+          variant: string
+        }
+        Update: {
+          body?: string
+          bounce_count?: number | null
+          campaign_id?: string
+          click_count?: number | null
+          created_at?: string
+          id?: string
+          is_winner?: boolean | null
+          open_count?: number | null
+          sent_count?: number | null
+          subject?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_ab_tests_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaigns: {
+        Row: {
+          ab_winner_decided_at: string | null
+          ab_winner_metric: string | null
+          body: string
+          bounce_count: number | null
+          click_count: number | null
+          created_at: string
+          delivered_count: number | null
           group_id: string | null
           id: string
+          is_ab_test: boolean | null
           name: string
           open_count: number | null
           scheduled_at: string | null
@@ -29,15 +84,21 @@ export type Database = {
           status: string
           subject: string
           template_id: string | null
+          unsubscribe_count: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          ab_winner_decided_at?: string | null
+          ab_winner_metric?: string | null
           body: string
+          bounce_count?: number | null
           click_count?: number | null
           created_at?: string
+          delivered_count?: number | null
           group_id?: string | null
           id?: string
+          is_ab_test?: boolean | null
           name: string
           open_count?: number | null
           scheduled_at?: string | null
@@ -46,15 +107,21 @@ export type Database = {
           status?: string
           subject: string
           template_id?: string | null
+          unsubscribe_count?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          ab_winner_decided_at?: string | null
+          ab_winner_metric?: string | null
           body?: string
+          bounce_count?: number | null
           click_count?: number | null
           created_at?: string
+          delivered_count?: number | null
           group_id?: string | null
           id?: string
+          is_ab_test?: boolean | null
           name?: string
           open_count?: number | null
           scheduled_at?: string | null
@@ -63,6 +130,7 @@ export type Database = {
           status?: string
           subject?: string
           template_id?: string | null
+          unsubscribe_count?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -75,6 +143,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_templates: {
+        Row: {
+          body_text: string
+          category: string
+          created_at: string
+          cta_text: string | null
+          cta_url: string | null
+          footer_text: string | null
+          heading: string
+          id: string
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body_text?: string
+          category?: string
+          created_at?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          footer_text?: string | null
+          heading?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body_text?: string
+          category?: string
+          created_at?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          footer_text?: string | null
+          heading?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       group_members: {
         Row: {

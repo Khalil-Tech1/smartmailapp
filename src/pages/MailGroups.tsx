@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Users, Trash2, UserPlus, X } from 'lucide-react';
+import { Plus, Users, Trash2, UserPlus, X, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,12 @@ export default function MailGroups() {
   const [newMemberName, setNewMemberName] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
+
+  // Inline editing state
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState('');
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingMemberName, setEditingMemberName] = useState('');
 
   useEffect(() => {
     if (user) loadGroups();
@@ -74,6 +80,18 @@ export default function MailGroups() {
     loadGroups();
   }
 
+  async function renameGroup(id: string) {
+    if (!editingGroupName.trim()) return;
+    const { error } = await supabase.from('mail_groups').update({ name: editingGroupName.trim() }).eq('id', id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Group renamed!' });
+      setEditingGroupId(null);
+      loadGroups();
+    }
+  }
+
   async function addMember() {
     if (!selectedGroup || !newMemberEmail.trim()) return;
     const groupMembers = members[selectedGroup] || [];
@@ -99,6 +117,18 @@ export default function MailGroups() {
   async function removeMember(id: string) {
     await supabase.from('group_members').delete().eq('id', id);
     loadGroups();
+  }
+
+  async function renameMember(id: string) {
+    if (!editingMemberName.trim()) return;
+    const { error } = await supabase.from('group_members').update({ name: editingMemberName.trim() }).eq('id', id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Member renamed!' });
+      setEditingMemberId(null);
+      loadGroups();
+    }
   }
 
   const activeGroup = groups.find(g => g.id === selectedGroup);
@@ -158,25 +188,55 @@ export default function MailGroups() {
                   onClick={() => setSelectedGroup(group.id)}
                 >
                   <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                         <Users className="w-5 h-5 text-primary" />
                       </div>
-                      <div>
-                        <p className="font-medium font-display">{group.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(members[group.id] || []).length} members
-                        </p>
-                      </div>
+                      {editingGroupId === group.id ? (
+                        <div className="flex items-center gap-1 flex-1" onClick={e => e.stopPropagation()}>
+                          <Input
+                            value={editingGroupName}
+                            onChange={e => setEditingGroupName(e.target.value)}
+                            className="h-8 text-sm"
+                            autoFocus
+                            onKeyDown={e => { if (e.key === 'Enter') renameGroup(group.id); if (e.key === 'Escape') setEditingGroupId(null); }}
+                          />
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => renameGroup(group.id)}>
+                            <Check className="w-4 h-4 text-success" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setEditingGroupId(null)}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="min-w-0">
+                          <p className="font-medium font-display truncate">{group.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(members[group.id] || []).length} members
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => { e.stopPropagation(); deleteGroup(group.id); }}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {editingGroupId !== group.id && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => { e.stopPropagation(); setEditingGroupId(group.id); setEditingGroupName(group.name); }}
+                          className="text-muted-foreground hover:text-primary"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => { e.stopPropagation(); deleteGroup(group.id); }}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -232,18 +292,44 @@ export default function MailGroups() {
                   <div className="space-y-2">
                     {activeMembers.map(member => (
                       <div key={member.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
                             {member.email[0].toUpperCase()}
                           </div>
-                          <div>
-                            <p className="text-sm font-medium">{member.name || member.email}</p>
-                            {member.name && <p className="text-xs text-muted-foreground">{member.email}</p>}
-                          </div>
+                          {editingMemberId === member.id ? (
+                            <div className="flex items-center gap-1 flex-1" onClick={e => e.stopPropagation()}>
+                              <Input
+                                value={editingMemberName}
+                                onChange={e => setEditingMemberName(e.target.value)}
+                                className="h-8 text-sm"
+                                placeholder="Member name"
+                                autoFocus
+                                onKeyDown={e => { if (e.key === 'Enter') renameMember(member.id); if (e.key === 'Escape') setEditingMemberId(null); }}
+                              />
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => renameMember(member.id)}>
+                                <Check className="w-4 h-4 text-success" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setEditingMemberId(null)}>
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{member.name || member.email}</p>
+                              {member.name && <p className="text-xs text-muted-foreground truncate">{member.email}</p>}
+                            </div>
+                          )}
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeMember(member.id)} className="text-muted-foreground hover:text-destructive">
-                          <X className="w-4 h-4" />
-                        </Button>
+                        {editingMemberId !== member.id && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button variant="ghost" size="icon" onClick={() => { setEditingMemberId(member.id); setEditingMemberName(member.name || ''); }} className="text-muted-foreground hover:text-primary">
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => removeMember(member.id)} className="text-muted-foreground hover:text-destructive">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

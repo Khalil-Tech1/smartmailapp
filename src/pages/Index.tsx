@@ -48,7 +48,7 @@ export default function Index() {
             transition={{ duration: 0.7 }}
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-full px-4 py-1.5 mb-6">
-              <Zap className="w-3.5 h-3.5" /> Now with AI-powered personalization
+              <Gift className="w-3.5 h-3.5" /> Start with a 2-week free trial on any paid plan
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold font-display leading-tight mb-6">
               Group emails,{' '}

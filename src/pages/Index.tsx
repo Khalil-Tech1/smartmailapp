@@ -150,9 +150,14 @@ export default function Index() {
                         {limits.scheduledSending && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> Scheduled sending</li>}
                         {limits.emailMarketing && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> Marketing tools</li>}
                       </ul>
+                      {limits.price > 0 && (
+                        <p className="text-xs text-primary font-medium mb-3 flex items-center gap-1">
+                          <Gift className="w-3 h-3" /> 14-day free trial included
+                        </p>
+                      )}
                       <Link to="/auth">
                         <Button variant={isPopular ? 'gradient' : 'outline'} className="w-full">
-                          {limits.price === 0 ? 'Get Started' : 'Subscribe'}
+                          {limits.price === 0 ? 'Get Started' : 'Start Free Trial'}
                         </Button>
                       </Link>
                     </CardContent>

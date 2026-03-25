@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, X } from 'lucide-react';
+import { Check, X, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,22 +17,52 @@ const features: { label: string; key: keyof typeof TIER_LIMITS.free }[] = [
 ];
 
 export default function Billing() {
-  const { tier } = useAuth();
+  const { tier, hasUsedTrial, isOnTrial, trialEnd, startTrial } = useAuth();
   const { toast } = useToast();
 
-  function handleUpgrade(targetTier: SubscriptionTier) {
+  async function handleUpgrade(targetTier: SubscriptionTier) {
     if (targetTier === 'free') return;
+
+    // If user hasn't used trial yet, start a free trial
+    if (!hasUsedTrial) {
+      const success = await startTrial(targetTier);
+      if (success) {
+        toast({
+          title: '🎉 Free trial started!',
+          description: `Enjoy your ${TIER_LIMITS[targetTier].label} plan free for 2 weeks!`,
+        });
+      } else {
+        toast({ title: 'Error', description: 'Could not start trial. Please try again.', variant: 'destructive' });
+      }
+      return;
+    }
+
+    // Already used trial — PayPal required
     toast({
       title: 'PayPal Integration Coming Soon',
       description: 'PayPal subscription billing will be integrated shortly. Stay tuned!',
     });
   }
 
+  const trialDaysLeft = trialEnd ? Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0;
+
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold font-display">Billing & Plans</h1>
         <p className="text-muted-foreground mt-1">Manage your subscription and upgrade your plan.</p>
+        {isOnTrial && (
+          <div className="mt-3 flex items-center gap-2 text-sm bg-primary/10 text-primary rounded-lg px-4 py-2 w-fit">
+            <Gift className="w-4 h-4" />
+            <span>Free trial active — <strong>{trialDaysLeft} days</strong> remaining</span>
+          </div>
+        )}
+        {!hasUsedTrial && tier === 'free' && (
+          <div className="mt-3 flex items-center gap-2 text-sm bg-accent/50 text-accent-foreground rounded-lg px-4 py-2 w-fit">
+            <Gift className="w-4 h-4" />
+            <span>You're eligible for a <strong>2-week free trial</strong> on any paid plan!</span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -54,7 +84,7 @@ export default function Billing() {
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="font-display capitalize">{limits.label}</CardTitle>
-                    {isCurrent && <Badge>Current</Badge>}
+                    {isCurrent && <Badge>{isOnTrial ? 'Trial' : 'Current'}</Badge>}
                   </div>
                   <div className="mt-2">
                     <span className="text-3xl font-bold font-display">
@@ -97,7 +127,13 @@ export default function Billing() {
                     disabled={isCurrent || t === 'free'}
                     onClick={() => handleUpgrade(t)}
                   >
-                    {isCurrent ? 'Current Plan' : t === 'free' ? 'Free' : 'Upgrade'}
+                    {isCurrent
+                      ? (isOnTrial ? 'On Trial' : 'Current Plan')
+                      : t === 'free'
+                        ? 'Free'
+                        : !hasUsedTrial
+                          ? 'Start Free Trial'
+                          : 'Upgrade'}
                   </Button>
                 </CardContent>
               </Card>

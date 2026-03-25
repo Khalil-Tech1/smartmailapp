@@ -8,9 +8,14 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   tier: SubscriptionTier;
+  hasUsedTrial: boolean;
+  trialEnd: string | null;
+  isOnTrial: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  startTrial: (targetTier: SubscriptionTier) => Promise<boolean>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,15 +25,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState<SubscriptionTier>('free');
+  const [hasUsedTrial, setHasUsedTrial] = useState(false);
+  const [trialEnd, setTrialEnd] = useState<string | null>(null);
+
+  const isOnTrial = trialEnd ? new Date(trialEnd) > new Date() : false;
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => fetchTier(session.user.id), 0);
+        setTimeout(() => fetchProfile(session.user.id), 0);
       } else {
         setTier('free');
+        setHasUsedTrial(false);
+        setTrialEnd(null);
       }
       setLoading(false);
     });
@@ -37,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchTier(session.user.id);
+        fetchProfile(session.user.id);
       }
       setLoading(false);
     });
@@ -45,13 +56,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function fetchTier(userId: string) {
+  async function fetchProfile(userId: string) {
     const { data } = await supabase
       .from('profiles')
-      .select('subscription_tier')
+      .select('subscription_tier, has_used_trial, trial_end')
       .eq('user_id', userId)
       .single();
-    if (data) setTier(data.subscription_tier);
+    if (data) {
+      // Check if trial has expired
+      if (data.trial_end && new Date(data.trial_end) < new Date() && data.subscription_tier !== 'free') {
+        // Trial expired — revert to free
+        await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('user_id', userId);
+        setTier('free');
+      } else {
+        setTier(data.subscription_tier);
+      }
+      setHasUsedTrial(data.has_used_trial);
+      setTrialEnd(data.trial_end);
+    }
+  }
+
+  async function refreshProfile() {
+    if (user) await fetchProfile(user.id);
+  }
+
+  async function startTrial(targetTier: SubscriptionTier): Promise<boolean> {
+    if (!user || hasUsedTrial) return false;
+    const now = new Date();
+    const end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
+    const { error } = await supabase.from('profiles').update({
+      subscription_tier: targetTier,
+      has_used_trial: true,
+      trial_start: now.toISOString(),
+      trial_end: end.toISOString(),
+    }).eq('user_id', user.id);
+    if (error) return false;
+    await fetchProfile(user.id);
+    return true;
   }
 
   async function signUp(email: string, password: string, fullName: string) {
@@ -74,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, tier, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, tier, hasUsedTrial, trialEnd, isOnTrial, signUp, signIn, signOut, startTrial, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -108,6 +108,10 @@ export default function Index() {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">Simple, transparent pricing</h2>
             <p className="text-muted-foreground text-lg">Start free. Upgrade when you need more.</p>
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-full px-4 py-1.5 mt-4">
+              <Gift className="w-4 h-4" />
+              <span>All paid plans include a <strong>2-week free trial</strong> for new users</span>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {tiers.map((t, i) => {

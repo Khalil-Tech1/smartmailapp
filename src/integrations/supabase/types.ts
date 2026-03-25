@@ -140,9 +140,12 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           full_name: string | null
+          has_used_trial: boolean
           id: string
           paypal_subscription_id: string | null
           subscription_tier: Database["public"]["Enums"]["subscription_tier"]
+          trial_end: string | null
+          trial_start: string | null
           updated_at: string
           user_id: string
         }
@@ -150,9 +153,12 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
+          has_used_trial?: boolean
           id?: string
           paypal_subscription_id?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string
           user_id: string
         }
@@ -160,9 +166,12 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
+          has_used_trial?: boolean
           id?: string
           paypal_subscription_id?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string
           user_id?: string
         }

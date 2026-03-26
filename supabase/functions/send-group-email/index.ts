@@ -81,6 +81,8 @@ serve(async (req) => {
               return `<div style="margin-bottom: 8px;"><a href="${a.url}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #e5e7eb; color: #1f2937; text-decoration: none; border-radius: 6px; font-size: 13px;">📄 ${a.name}</a></div>`
             }).join('')}
           </div>` : ''}
+        </div>
+        <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 24px;">Sent via SmartMail</p>
       </body>
       </html>
     `

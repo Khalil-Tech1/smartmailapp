@@ -67,9 +67,20 @@ serve(async (req) => {
           <div style="margin-top: 24px; padding: 16px; background: #f0f4ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
             <p style="margin: 0 0 6px; font-weight: 600; color: #1e40af; font-size: 13px;">🎙️ Voice Note Transcript</p>
             <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.5;">${voiceNoteTranscript}</p>
+           </div>` : ''}
+          ${attachments?.length ? `
+          <div style="margin-top: 24px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+            <p style="margin: 0 0 12px; font-weight: 600; color: #374151; font-size: 13px;">📎 Attachments</p>
+            ${attachments.map((a: any) => {
+              if (a.type?.startsWith('image/')) {
+                return `<div style="margin-bottom: 12px;"><img src="${a.url}" alt="${a.name}" style="max-width: 100%; border-radius: 8px; max-height: 300px;" /><p style="margin: 4px 0 0; font-size: 12px; color: #6b7280;">${a.name}</p></div>`
+              }
+              if (a.type?.startsWith('video/')) {
+                return `<div style="margin-bottom: 12px;"><a href="${a.url}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-size: 13px;">▶ ${a.name}</a></div>`
+              }
+              return `<div style="margin-bottom: 8px;"><a href="${a.url}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #e5e7eb; color: #1f2937; text-decoration: none; border-radius: 6px; font-size: 13px;">📄 ${a.name}</a></div>`
+            }).join('')}
           </div>` : ''}
-        </div>
-        <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 24px;">Sent via SmartMail</p>
       </body>
       </html>
     `

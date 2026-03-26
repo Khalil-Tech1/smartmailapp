@@ -283,6 +283,7 @@ export default function ComposeEmail() {
           groupId: selectedGroupId,
           scheduledAt,
           voiceNoteTranscript: voiceTranscript.trim() || undefined,
+          attachments: attachments.length > 0 ? attachments : undefined,
         },
       });
 

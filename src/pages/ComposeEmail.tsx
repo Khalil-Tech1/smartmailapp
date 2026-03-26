@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Send, Users, Sparkles, Mic, MicOff, Clock, Calendar, Loader2, Square } from 'lucide-react';
+import { Send, Users, Sparkles, Mic, MicOff, Clock, Calendar, Loader2, Square, Paperclip, X, FileIcon, ImageIcon, VideoIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

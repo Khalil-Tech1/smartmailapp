@@ -92,8 +92,16 @@ export default function MailGroups() {
     }
   }
 
+  function isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
   async function addMember() {
     if (!selectedGroup || !newMemberEmail.trim()) return;
+    if (!isValidEmail(newMemberEmail.trim())) {
+      toast({ title: 'Invalid email', description: 'Please enter a valid email address (e.g. user@gmail.com, user@yahoo.com).', variant: 'destructive' });
+      return;
+    }
     const groupMembers = members[selectedGroup] || [];
     if (groupMembers.length >= limits.maxMembersPerGroup) {
       toast({ title: 'Member limit reached', description: `Your ${limits.label} plan allows ${limits.maxMembersPerGroup} members per group.`, variant: 'destructive' });

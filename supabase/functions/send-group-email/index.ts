@@ -23,7 +23,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) throw new Error('Unauthorized')
 
-    const { recipients, subject, body, groupId, scheduledAt, voiceNoteTranscript } = await req.json()
+    const { recipients, subject, body, groupId, scheduledAt, voiceNoteTranscript, attachments } = await req.json()
 
     if (!recipients?.length || !subject || !body) {
       throw new Error('Missing required fields: recipients, subject, body')

@@ -67,6 +67,50 @@ export default function TemplateSelector({ onSelect, selectedId }: TemplateSelec
     loadCustomTemplates();
   }
 
+  async function uploadTemplate() {
+    if (!user || !uploadName.trim() || !uploadHeading.trim()) {
+      toast({ title: 'Fill required fields', description: 'Name and heading are required.', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('email_templates').insert({
+        user_id: user.id,
+        name: uploadName.trim(),
+        heading: uploadHeading.trim(),
+        body_text: uploadBody.trim(),
+        cta_text: uploadCta.trim() || null,
+        cta_url: uploadCtaUrl.trim() || null,
+        footer_text: uploadFooter.trim() || null,
+        primary_color: uploadColor,
+        category: 'custom',
+      });
+      if (error) throw error;
+      toast({ title: 'Template uploaded!' });
+      setShowUploadDialog(false);
+      setUploadName(''); setUploadHeading(''); setUploadBody('');
+      setUploadCta(''); setUploadCtaUrl(''); setUploadFooter('');
+      loadCustomTemplates();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleHtmlFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    // Extract title from HTML
+    const titleMatch = text.match(/<title>(.*?)<\/title>/i);
+    setUploadName(titleMatch?.[1] || file.name.replace(/\.html?$/i, ''));
+    setUploadHeading(titleMatch?.[1] || 'Imported Template');
+    setUploadBody(text);
+    setShowUploadDialog(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   const allPreset = PRESET_TEMPLATES;
   const categories = ['all', ...new Set(allPreset.map(t => t.category))];
 

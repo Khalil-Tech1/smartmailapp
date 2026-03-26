@@ -174,6 +174,56 @@ export default function ComposeEmail() {
     toast({ title: 'Transcript added to message!' });
   }
 
+  // ─── File Attachments ────────────────────────────────────────
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || !user) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > 10 * 1024 * 1024) {
+          toast({ title: 'File too large', description: `${file.name} exceeds 10MB limit.`, variant: 'destructive' });
+          continue;
+        }
+        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from('email-attachments').upload(path, file);
+        if (error) {
+          toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+          continue;
+        }
+        const { data: urlData } = supabase.storage.from('email-attachments').getPublicUrl(path);
+        setAttachments(prev => [...prev, {
+          name: file.name,
+          url: urlData.publicUrl,
+          type: file.type,
+          size: file.size,
+        }]);
+      }
+      toast({ title: 'Files attached!' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  function removeAttachment(index: number) {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function formatFileSize(bytes: number) {
+    if (bytes < 1024) return bytes + 'B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
+  }
+
+  function getFileIcon(type: string) {
+    if (type.startsWith('image/')) return <ImageIcon className="w-4 h-4 text-primary" />;
+    if (type.startsWith('video/')) return <VideoIcon className="w-4 h-4 text-primary" />;
+    return <FileIcon className="w-4 h-4 text-muted-foreground" />;
+  }
+
   // ─── AI Personalization ───────────────────────────────────────
   async function aiPersonalize() {
     if (!body.trim()) {

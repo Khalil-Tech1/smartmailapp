@@ -49,6 +49,11 @@ export default function ComposeEmail() {
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
 
+  // Attachments
+  const [attachments, setAttachments] = useState<{ name: string; url: string; type: string; size: number }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (user) loadGroups();
   }, [user]);

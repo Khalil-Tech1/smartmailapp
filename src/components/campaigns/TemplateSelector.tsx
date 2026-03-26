@@ -166,6 +166,70 @@ export default function TemplateSelector({ onSelect, selectedId }: TemplateSelec
         </TabsContent>
 
         <TabsContent value="custom" className="mt-4">
+          <div className="flex gap-2 mb-4">
+            <Dialog open={showUploadDialog} onOpenChange={v => { setShowUploadDialog(v); }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Upload className="w-3.5 h-3.5" /> Upload Template
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="font-display">Upload Custom Template</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 mt-4">
+                  <div className="space-y-1">
+                    <Label>Template Name *</Label>
+                    <Input placeholder="My Newsletter" value={uploadName} onChange={e => setUploadName(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Heading *</Label>
+                    <Input placeholder="Email heading" value={uploadHeading} onChange={e => setUploadHeading(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Body Content</Label>
+                    <textarea
+                      className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      placeholder="Email body text or paste HTML..."
+                      value={uploadBody}
+                      onChange={e => setUploadBody(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label>CTA Button Text</Label>
+                      <Input placeholder="Click Here" value={uploadCta} onChange={e => setUploadCta(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>CTA URL</Label>
+                      <Input placeholder="https://..." value={uploadCtaUrl} onChange={e => setUploadCtaUrl(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Footer Text</Label>
+                    <Input placeholder="© 2026 Your Company" value={uploadFooter} onChange={e => setUploadFooter(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Primary Color</Label>
+                    <div className="flex gap-2 items-center">
+                      <input type="color" value={uploadColor} onChange={e => setUploadColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
+                      <span className="text-xs text-muted-foreground">{uploadColor}</span>
+                    </div>
+                  </div>
+                  <Button onClick={uploadTemplate} variant="gradient" className="w-full" disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                    Save Template
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <div>
+              <input ref={fileInputRef} type="file" accept=".html,.htm" onChange={handleHtmlFileUpload} className="hidden" />
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => fileInputRef.current?.click()}>
+                <FileText className="w-3.5 h-3.5" /> Import HTML
+              </Button>
+            </div>
+          </div>
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -174,7 +238,7 @@ export default function TemplateSelector({ onSelect, selectedId }: TemplateSelec
             <div className="text-center py-8 text-muted-foreground">
               <Save className="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p className="text-sm">No saved templates yet.</p>
-              <p className="text-xs mt-1">Use the editor to create and save custom templates.</p>
+              <p className="text-xs mt-1">Upload a template or import an HTML file to get started.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">

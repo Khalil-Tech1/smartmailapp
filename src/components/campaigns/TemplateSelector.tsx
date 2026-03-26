@@ -22,6 +22,16 @@ export default function TemplateSelector({ onSelect, selectedId }: TemplateSelec
   const { toast } = useToast();
   const [customTemplates, setCustomTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploadName, setUploadName] = useState('');
+  const [uploadHeading, setUploadHeading] = useState('');
+  const [uploadBody, setUploadBody] = useState('');
+  const [uploadCta, setUploadCta] = useState('');
+  const [uploadCtaUrl, setUploadCtaUrl] = useState('');
+  const [uploadFooter, setUploadFooter] = useState('');
+  const [uploadColor, setUploadColor] = useState('#3b82f6');
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) loadCustomTemplates();

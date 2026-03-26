@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Send, Users, Sparkles, Mic, MicOff, Clock, Calendar, Loader2, Square } from 'lucide-react';
+import { Send, Users, Sparkles, Mic, MicOff, Clock, Calendar, Loader2, Square, Paperclip, X, FileIcon, ImageIcon, VideoIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,6 +48,11 @@ export default function ComposeEmail() {
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
+
+  // Attachments
+  const [attachments, setAttachments] = useState<{ name: string; url: string; type: string; size: number }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) loadGroups();
@@ -169,6 +174,56 @@ export default function ComposeEmail() {
     toast({ title: 'Transcript added to message!' });
   }
 
+  // ─── File Attachments ────────────────────────────────────────
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || !user) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > 10 * 1024 * 1024) {
+          toast({ title: 'File too large', description: `${file.name} exceeds 10MB limit.`, variant: 'destructive' });
+          continue;
+        }
+        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from('email-attachments').upload(path, file);
+        if (error) {
+          toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+          continue;
+        }
+        const { data: urlData } = supabase.storage.from('email-attachments').getPublicUrl(path);
+        setAttachments(prev => [...prev, {
+          name: file.name,
+          url: urlData.publicUrl,
+          type: file.type,
+          size: file.size,
+        }]);
+      }
+      toast({ title: 'Files attached!' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  function removeAttachment(index: number) {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function formatFileSize(bytes: number) {
+    if (bytes < 1024) return bytes + 'B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
+  }
+
+  function getFileIcon(type: string) {
+    if (type.startsWith('image/')) return <ImageIcon className="w-4 h-4 text-primary" />;
+    if (type.startsWith('video/')) return <VideoIcon className="w-4 h-4 text-primary" />;
+    return <FileIcon className="w-4 h-4 text-muted-foreground" />;
+  }
+
   // ─── AI Personalization ───────────────────────────────────────
   async function aiPersonalize() {
     if (!body.trim()) {
@@ -228,6 +283,7 @@ export default function ComposeEmail() {
           groupId: selectedGroupId,
           scheduledAt,
           voiceNoteTranscript: voiceTranscript.trim() || undefined,
+          attachments: attachments.length > 0 ? attachments : undefined,
         },
       });
 
@@ -243,6 +299,7 @@ export default function ComposeEmail() {
       setSubject('');
       setBody('');
       clearRecording();
+      setAttachments([]);
       setScheduleEnabled(false);
       setScheduleDate('');
       setScheduleTime('');
@@ -449,6 +506,51 @@ export default function ComposeEmail() {
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Attachments Card */}
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="font-display text-lg flex items-center gap-2">
+                <Paperclip className="w-4 h-4" /> Attachments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="gap-2 w-full mb-3"
+              >
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                {uploading ? 'Uploading...' : 'Attach Files, Images, or Videos'}
+              </Button>
+              <p className="text-xs text-muted-foreground mb-3">Max 10MB per file. Supports images, videos, PDFs, documents.</p>
+              {attachments.length > 0 && (
+                <div className="space-y-2">
+                  {attachments.map((file, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {getFileIcon(file.type)}
+                        <span className="truncate">{file.name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeAttachment(i)}>
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

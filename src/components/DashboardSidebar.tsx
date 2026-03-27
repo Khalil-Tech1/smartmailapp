@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Mail, Users, Send, BarChart3, CreditCard, Settings, LogOut, LayoutDashboard } from 'lucide-react';
+import { Mail, Users, Send, BarChart3, CreditCard, Settings, LogOut, LayoutDashboard, UsersRound, Key } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { TIER_LIMITS } from '@/lib/tier-limits';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,8 @@ const navItems: { href: string; icon: any; label: string; tierRequired?: string[
   { href: '/dashboard/compose', icon: Send, label: 'Compose' },
   { href: '/dashboard/history', icon: Mail, label: 'Sent Emails' },
   { href: '/dashboard/campaigns', icon: BarChart3, label: 'Campaigns', tierRequired: ['business', 'enterprise'] },
+  { href: '/dashboard/team', icon: UsersRound, label: 'Team', tierRequired: ['pro', 'business', 'enterprise'] },
+  { href: '/dashboard/api', icon: Key, label: 'API', tierRequired: ['enterprise'] },
   { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, X, Gift } from 'lucide-react';
+import { Check, X, Gift, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,14 +7,21 @@ import { useAuth } from '@/hooks/useAuth';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
 import { useToast } from '@/hooks/use-toast';
 
-const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
+const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business', 'enterprise'];
 
 const features: { label: string; key: keyof typeof TIER_LIMITS.free }[] = [
   { label: 'Voice Notes', key: 'voiceNotes' },
   { label: 'AI-Personalized Messages', key: 'aiMessages' },
   { label: 'Scheduled Sending', key: 'scheduledSending' },
   { label: 'Email Marketing Tools', key: 'emailMarketing' },
+  { label: 'Custom Branding', key: 'customBranding' },
+  { label: 'API Access', key: 'apiAccess' },
 ];
+
+function formatLimit(val: number | null) {
+  if (val === null) return '∞';
+  return val.toLocaleString();
+}
 
 export default function Billing() {
   const { tier, hasUsedTrial, isOnTrial, trialEnd, startTrial } = useAuth();
@@ -23,7 +30,6 @@ export default function Billing() {
   async function handleUpgrade(targetTier: SubscriptionTier) {
     if (targetTier === 'free') return;
 
-    // If user hasn't used trial yet, start a free trial
     if (!hasUsedTrial) {
       const success = await startTrial(targetTier);
       if (success) {
@@ -37,7 +43,6 @@ export default function Billing() {
       return;
     }
 
-    // Already used trial — PayPal required
     toast({
       title: 'PayPal Integration Coming Soon',
       description: 'PayPal subscription billing will be integrated shortly. Stay tuned!',
@@ -65,10 +70,11 @@ export default function Billing() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {tiers.map((t, i) => {
           const limits = TIER_LIMITS[t];
           const isCurrent = t === tier;
+          const isEnterprise = t === 'enterprise';
 
           return (
             <motion.div
@@ -81,39 +87,52 @@ export default function Billing() {
                 {isCurrent && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />
                 )}
-                <CardHeader className="pb-4">
+                <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="font-display capitalize">{limits.label}</CardTitle>
-                    {isCurrent && <Badge>{isOnTrial ? 'Trial' : 'Current'}</Badge>}
+                    <CardTitle className="font-display flex items-center gap-1.5 text-base">
+                      {isEnterprise && <Crown className="w-4 h-4 text-primary" />}
+                      {limits.label}
+                    </CardTitle>
+                    {isCurrent && <Badge className="text-xs">{isOnTrial ? 'Trial' : 'Current'}</Badge>}
                   </div>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold font-display">
+                  <div className="mt-1">
+                    <span className="text-2xl font-bold font-display">
                       {limits.price === 0 ? 'Free' : `$${limits.price}`}
                     </span>
-                    {limits.price > 0 && <span className="text-muted-foreground text-sm">/mo</span>}
+                    {limits.price > 0 && <span className="text-muted-foreground text-xs">/mo</span>}
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2 text-sm">
+                <CardContent className="space-y-3">
+                  <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Mail Groups</span>
-                      <span className="font-medium">{limits.maxGroups}</span>
+                      <span className="font-medium">{formatLimit(limits.maxGroups)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Members/Group</span>
-                      <span className="font-medium">{limits.maxMembersPerGroup}</span>
+                      <span className="font-medium">{formatLimit(limits.maxMembersPerGroup)}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Emails/Month</span>
+                      <span className="font-medium">{formatLimit(limits.maxEmailsPerMonth)}</span>
+                    </div>
+                    {(limits.maxTeamMembers !== null || isEnterprise) && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Team Members</span>
+                        <span className="font-medium">{isEnterprise ? '∞' : limits.maxTeamMembers}</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {features.map(f => {
                       const has = limits[f.key];
                       return (
-                        <div key={f.key} className="flex items-center gap-2 text-sm">
+                        <div key={f.key} className="flex items-center gap-1.5 text-xs">
                           {has ? (
-                            <Check className="w-4 h-4 text-success" />
+                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
                           ) : (
-                            <X className="w-4 h-4 text-muted-foreground/30" />
+                            <X className="w-3.5 h-3.5 text-muted-foreground/30 shrink-0" />
                           )}
                           <span className={has ? '' : 'text-muted-foreground/50'}>{f.label}</span>
                         </div>
@@ -124,6 +143,7 @@ export default function Billing() {
                   <Button
                     variant={isCurrent ? 'outline' : 'gradient'}
                     className="w-full"
+                    size="sm"
                     disabled={isCurrent || t === 'free'}
                     onClick={() => handleUpgrade(t)}
                   >

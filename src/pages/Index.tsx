@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Users, Send, Zap, Shield, Clock, ArrowRight, Check, Gift } from 'lucide-react';
+import { Mail, Users, Send, Zap, Shield, Clock, ArrowRight, Check, Gift, Crown, Infinity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
@@ -14,7 +14,12 @@ const features = [
   { icon: Mail, title: 'Marketing Tools', desc: 'Templates, campaigns, and analytics for growth.' },
 ];
 
-const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
+const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business', 'enterprise'];
+
+function formatLimit(val: number | null) {
+  if (val === null) return 'Unlimited';
+  return val.toLocaleString();
+}
 
 export default function Index() {
   return (
@@ -104,7 +109,7 @@ export default function Index() {
 
       {/* Pricing */}
       <section id="pricing" className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">Simple, transparent pricing</h2>
             <p className="text-muted-foreground text-lg">Start free. Upgrade when you need more.</p>
@@ -113,10 +118,11 @@ export default function Index() {
               <span>All paid plans include a <strong>2-week free trial</strong> for new users</span>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
             {tiers.map((t, i) => {
               const limits = TIER_LIMITS[t];
               const isPopular = t === 'pro';
+              const isEnterprise = t === 'enterprise';
               return (
                 <motion.div
                   key={t}
@@ -125,30 +131,58 @@ export default function Index() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
                 >
-                  <Card className={`relative overflow-hidden h-full ${isPopular ? 'border-primary shadow-glow' : 'border-border/50'}`}>
+                  <Card className={`relative overflow-hidden h-full ${isPopular ? 'border-primary shadow-glow' : isEnterprise ? 'border-primary/60 shadow-glow' : 'border-border/50'}`}>
                     {isPopular && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />}
-                    <CardContent className="p-6">
+                    {isEnterprise && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent" />}
+                    <CardContent className="p-5">
                       <div className="mb-4">
-                        <h3 className="font-display font-bold text-lg capitalize">{limits.label}</h3>
+                        <div className="flex items-center gap-1.5">
+                          {isEnterprise && <Crown className="w-4 h-4 text-primary" />}
+                          <h3 className="font-display font-bold text-lg">{limits.label}</h3>
+                        </div>
                         {isPopular && (
                           <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">
                             Most Popular
                           </span>
                         )}
                       </div>
-                      <div className="mb-6">
-                        <span className="text-4xl font-bold font-display">
+                      <div className="mb-5">
+                        <span className="text-3xl font-bold font-display">
                           {limits.price === 0 ? 'Free' : `$${limits.price}`}
                         </span>
-                        {limits.price > 0 && <span className="text-muted-foreground">/mo</span>}
+                        {limits.price > 0 && <span className="text-muted-foreground text-sm">/mo</span>}
                       </div>
-                      <ul className="space-y-3 text-sm mb-6">
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> {limits.maxGroups} mail groups</li>
-                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> {limits.maxMembersPerGroup} members/group</li>
-                        {limits.voiceNotes && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> Voice notes</li>}
-                        {limits.aiMessages && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> AI personalization</li>}
-                        {limits.scheduledSending && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> Scheduled sending</li>}
-                        {limits.emailMarketing && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> Marketing tools</li>}
+                      <ul className="space-y-2 text-sm mb-5">
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                          {formatLimit(limits.maxGroups)} mail groups
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                          {formatLimit(limits.maxMembersPerGroup)} members/group
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                          {formatLimit(limits.maxEmailsPerMonth)} emails/mo
+                        </li>
+                        {limits.maxTeamMembers !== null && (
+                          <li className="flex items-center gap-2">
+                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                            {limits.maxTeamMembers === null ? 'Unlimited' : limits.maxTeamMembers} team members
+                          </li>
+                        )}
+                        {t === 'enterprise' && (
+                          <li className="flex items-center gap-2">
+                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                            Unlimited team members
+                          </li>
+                        )}
+                        {limits.voiceNotes && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Voice notes</li>}
+                        {limits.aiMessages && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> AI personalization</li>}
+                        {limits.scheduledSending && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Scheduled sending</li>}
+                        {limits.emailMarketing && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Marketing tools</li>}
+                        {limits.customBranding && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Custom branding</li>}
+                        {limits.apiAccess && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> API access</li>}
                       </ul>
                       {limits.price > 0 && (
                         <p className="text-xs text-primary font-medium mb-3 flex items-center gap-1">
@@ -156,7 +190,7 @@ export default function Index() {
                         </p>
                       )}
                       <Link to="/auth">
-                        <Button variant={isPopular ? 'gradient' : 'outline'} className="w-full">
+                        <Button variant={isPopular || isEnterprise ? 'gradient' : 'outline'} className="w-full" size="sm">
                           {limits.price === 0 ? 'Get Started' : 'Start Free Trial'}
                         </Button>
                       </Link>

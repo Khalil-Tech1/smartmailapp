@@ -51,7 +51,7 @@ export default function DashboardSidebar() {
               {item.label}
               {isLocked && (
                 <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0">
-                  {item.tierRequired}
+                  {Array.isArray(item.tierRequired) ? item.tierRequired[0] : item.tierRequired}+
                 </Badge>
               )}
             </Link>

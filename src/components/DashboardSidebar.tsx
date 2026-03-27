@@ -4,12 +4,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { TIER_LIMITS } from '@/lib/tier-limits';
 import { Badge } from '@/components/ui/badge';
 
-const navItems = [
+const navItems: { href: string; icon: any; label: string; tierRequired?: string[] }[] = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
   { href: '/dashboard/groups', icon: Users, label: 'Mail Groups' },
   { href: '/dashboard/compose', icon: Send, label: 'Compose' },
   { href: '/dashboard/history', icon: Mail, label: 'Sent Emails' },
-  { href: '/dashboard/campaigns', icon: BarChart3, label: 'Campaigns', tierRequired: ['business', 'enterprise'] as const },
+  { href: '/dashboard/campaigns', icon: BarChart3, label: 'Campaigns', tierRequired: ['business', 'enterprise'] },
   { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];

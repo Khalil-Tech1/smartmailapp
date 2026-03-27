@@ -35,7 +35,7 @@ export default function DashboardSidebar() {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
-          const isLocked = item.tierRequired && tier !== item.tierRequired;
+          const isLocked = item.tierRequired && !(Array.isArray(item.tierRequired) ? item.tierRequired.includes(tier) : tier === item.tierRequired);
 
           return (
             <Link

@@ -63,13 +63,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('user_id', userId)
       .single();
     if (data) {
-      // Check if trial has expired
-      if (data.trial_end && new Date(data.trial_end) < new Date() && data.subscription_tier !== 'free') {
-        // Trial expired — revert to free
+      const dbTier = data.subscription_tier as string;
+      // Map any legacy tiers to valid ones
+      const validTiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
+      const mappedTier: SubscriptionTier = validTiers.includes(dbTier as SubscriptionTier)
+        ? (dbTier as SubscriptionTier)
+        : 'free';
+
+      if (data.trial_end && new Date(data.trial_end) < new Date() && mappedTier !== 'free') {
         await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('user_id', userId);
         setTier('free');
       } else {
-        setTier(data.subscription_tier);
+        setTier(mappedTier);
       }
       setHasUsedTrial(data.has_used_trial);
       setTrialEnd(data.trial_end);
@@ -83,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function startTrial(targetTier: SubscriptionTier): Promise<boolean> {
     if (!user || hasUsedTrial) return false;
     const now = new Date();
-    const end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
+    const end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
     const { error } = await supabase.from('profiles').update({
       subscription_tier: targetTier,
       has_used_trial: true,

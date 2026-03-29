@@ -71,9 +71,7 @@ export default function TeamManagement() {
   const [teamName, setTeamName] = useState('');
   const [creatingTeam, setCreatingTeam] = useState(false);
 
-  const canManageTeam = !limits.maxTeamMembers && tier !== 'enterprise'
-    ? false
-    : tier === 'pro' || tier === 'business' || tier === 'enterprise';
+  const canManageTeam = tier === 'basic' || tier === 'pro' || tier === 'business';
 
   useEffect(() => {
     if (user && canManageTeam) {
@@ -280,12 +278,12 @@ export default function TeamManagement() {
         <div className="bg-muted/50 rounded-full p-6 mb-4">
           <Users className="w-10 h-10 text-muted-foreground" />
         </div>
-        <h2 className="text-xl font-display font-bold mb-2">Pro Plan Required</h2>
+        <h2 className="text-xl font-display font-bold mb-2">Basic Plan Required</h2>
         <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
-          Team management with role-based permissions is available on Pro, Business, and Enterprise plans.
+          Upgrade to Basic for $9/month to unlock team members and collaboration.
         </p>
         <Button variant="gradient" onClick={() => navigate('/dashboard/billing')}>
-          Upgrade Now
+          Upgrade to Basic
         </Button>
       </div>
     );

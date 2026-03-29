@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Users, Send, Zap, Shield, Clock, ArrowRight, Check, Gift, Crown, Infinity } from 'lucide-react';
+import { Mail, Users, Send, Shield, Clock, ArrowRight, Check, X, Gift, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
@@ -8,18 +8,71 @@ import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
 const features = [
   { icon: Users, title: 'Mail Groups', desc: 'Organize contacts into groups for targeted sending.' },
   { icon: Send, title: 'Instant Sending', desc: 'Send emails to entire groups or selected members.' },
-  { icon: Zap, title: 'AI Personalization', desc: 'Craft personalized messages with AI assistance.' },
+  { icon: Mic, title: 'Voice to Text', desc: 'Speak your message and it converts to text instantly.' },
   { icon: Clock, title: 'Scheduled Sending', desc: 'Schedule emails to send at the perfect time.' },
   { icon: Shield, title: 'Secure & Private', desc: 'Your data is encrypted and never shared.' },
   { icon: Mail, title: 'Marketing Tools', desc: 'Templates, campaigns, and analytics for growth.' },
 ];
 
-const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business', 'enterprise'];
+const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
-function formatLimit(val: number | null) {
-  if (val === null) return 'Unlimited';
-  return val.toLocaleString();
-}
+const tierFeatures: Record<SubscriptionTier, string[]> = {
+  free: [
+    'Create mail groups & contacts',
+    'Send email campaigns',
+    'Voice to text input',
+    'Campaign history',
+    'SmartMail badge on emails',
+  ],
+  basic: [
+    'Everything in Free',
+    'Scheduled sending',
+    'Manage scheduled emails',
+    'Custom email signature',
+    'Custom company name',
+    '2 team members',
+  ],
+  pro: [
+    'Everything in Basic',
+    '6 email templates',
+    'Full campaign analytics',
+    'Open, click & bounce rates',
+    'Campaign comparison tool',
+    'Custom branding & logo',
+    'Remove SmartMail badge',
+    '3 team members',
+  ],
+  business: [
+    'Everything in Pro',
+    '10 email templates',
+    'Custom template builder',
+    'A/B testing campaigns',
+    'Contact tagging & segmentation',
+    'Unsubscribe management',
+    'Campaign archiving',
+    'Ownership transfer',
+    '5 team members (4 roles)',
+  ],
+};
+
+const comparisonFeatures = [
+  { name: 'Mail Groups', free: true, basic: true, pro: true, business: true },
+  { name: 'Send Campaigns', free: true, basic: true, pro: true, business: true },
+  { name: 'Voice to Text', free: true, basic: true, pro: true, business: true },
+  { name: 'Campaign History', free: true, basic: true, pro: true, business: true },
+  { name: 'Scheduled Sending', free: false, basic: true, pro: true, business: true },
+  { name: 'Custom Signature', free: false, basic: true, pro: true, business: true },
+  { name: 'Email Templates', free: false, basic: false, pro: '6 templates', business: '10 templates' },
+  { name: 'Campaign Analytics', free: false, basic: false, pro: true, business: true },
+  { name: 'Custom Branding', free: false, basic: false, pro: true, business: true },
+  { name: 'Remove SmartMail Badge', free: false, basic: false, pro: true, business: true },
+  { name: 'Template Builder', free: false, basic: false, pro: false, business: true },
+  { name: 'A/B Testing', free: false, basic: false, pro: false, business: true },
+  { name: 'Contact Tagging', free: false, basic: false, pro: false, business: true },
+  { name: 'Unsubscribe Management', free: false, basic: false, pro: false, business: true },
+  { name: 'Ownership Transfer', free: false, basic: false, pro: false, business: true },
+  { name: 'Team Members', free: '1', basic: '2', pro: '3', business: '5' },
+];
 
 export default function Index() {
   return (
@@ -34,12 +87,8 @@ export default function Index() {
             <span className="text-xl font-bold font-display">SmartMail</span>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/auth">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link to="/auth">
-              <Button variant="gradient">Get Started</Button>
-            </Link>
+            <Link to="/auth"><Button variant="ghost">Sign In</Button></Link>
+            <Link to="/auth"><Button variant="gradient">Get Started</Button></Link>
           </div>
         </div>
       </nav>
@@ -47,13 +96,9 @@ export default function Index() {
       {/* Hero */}
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-full px-4 py-1.5 mb-6">
-              <Gift className="w-3.5 h-3.5" /> Start with a 2-week free trial on any paid plan
+              <Gift className="w-3.5 h-3.5" /> 14-day free trial on all paid plans
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold font-display leading-tight mb-6">
               Group emails,{' '}
@@ -85,13 +130,7 @@ export default function Index() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
+              <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
                 <Card className="bg-gradient-card border-border/50 h-full">
                   <CardContent className="p-6">
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
@@ -109,37 +148,22 @@ export default function Index() {
 
       {/* Pricing */}
       <section id="pricing" className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">Simple, transparent pricing</h2>
             <p className="text-muted-foreground text-lg">Start free. Upgrade when you need more.</p>
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-full px-4 py-1.5 mt-4">
-              <Gift className="w-4 h-4" />
-              <span>All paid plans include a <strong>2-week free trial</strong> for new users</span>
-            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {tiers.map((t, i) => {
               const limits = TIER_LIMITS[t];
               const isPopular = t === 'pro';
-              const isEnterprise = t === 'enterprise';
               return (
-                <motion.div
-                  key={t}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <Card className={`relative overflow-hidden h-full ${isPopular ? 'border-primary shadow-glow' : isEnterprise ? 'border-primary/60 shadow-glow' : 'border-border/50'}`}>
+                <motion.div key={t} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+                  <Card className={`relative overflow-hidden h-full ${isPopular ? 'border-primary shadow-glow' : 'border-border/50'}`}>
                     {isPopular && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />}
-                    {isEnterprise && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent" />}
                     <CardContent className="p-5">
                       <div className="mb-4">
-                        <div className="flex items-center gap-1.5">
-                          {isEnterprise && <Crown className="w-4 h-4 text-primary" />}
-                          <h3 className="font-display font-bold text-lg">{limits.label}</h3>
-                        </div>
+                        <h3 className="font-display font-bold text-lg">{limits.label}</h3>
                         {isPopular && (
                           <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">
                             Most Popular
@@ -155,43 +179,31 @@ export default function Index() {
                       <ul className="space-y-2 text-sm mb-5">
                         <li className="flex items-center gap-2">
                           <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                          {formatLimit(limits.maxGroups)} mail groups
+                          {limits.maxGroups} mail groups
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                          {formatLimit(limits.maxMembersPerGroup)} members/group
+                          {limits.maxMembersPerGroup} members/group
                         </li>
                         <li className="flex items-center gap-2">
                           <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                          {formatLimit(limits.maxEmailsPerMonth)} emails/mo
+                          {limits.maxEmailsPerMonth.toLocaleString()} emails/mo
                         </li>
-                        {limits.maxTeamMembers !== null && (
-                          <li className="flex items-center gap-2">
+                        {tierFeatures[t].map((feat) => (
+                          <li key={feat} className="flex items-center gap-2">
                             <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                            {limits.maxTeamMembers === null ? 'Unlimited' : limits.maxTeamMembers} team members
+                            {feat}
                           </li>
-                        )}
-                        {t === 'enterprise' && (
-                          <li className="flex items-center gap-2">
-                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                            Unlimited team members
-                          </li>
-                        )}
-                        {limits.voiceNotes && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Voice notes</li>}
-                        {limits.aiMessages && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> AI personalization</li>}
-                        {limits.scheduledSending && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Scheduled sending</li>}
-                        {limits.emailMarketing && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Marketing tools</li>}
-                        {limits.customBranding && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Custom branding</li>}
-                        {limits.apiAccess && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> API access</li>}
+                        ))}
                       </ul>
                       {limits.price > 0 && (
                         <p className="text-xs text-primary font-medium mb-3 flex items-center gap-1">
-                          <Gift className="w-3 h-3" /> 14-day free trial included
+                          <Gift className="w-3 h-3" /> 14-day free trial, cancel anytime
                         </p>
                       )}
                       <Link to="/auth">
-                        <Button variant={isPopular || isEnterprise ? 'gradient' : 'outline'} className="w-full" size="sm">
-                          {limits.price === 0 ? 'Get Started' : 'Start Free Trial'}
+                        <Button variant={isPopular ? 'gradient' : 'outline'} className="w-full" size="sm">
+                          {limits.price === 0 ? 'Get Started Free' : 'Start 14 Day Free Trial'}
                         </Button>
                       </Link>
                     </CardContent>
@@ -199,6 +211,44 @@ export default function Index() {
                 </motion.div>
               );
             })}
+          </div>
+
+          {/* Feature Comparison Table */}
+          <div className="mt-16">
+            <h3 className="text-2xl font-bold font-display text-center mb-8">Feature Comparison</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Feature</th>
+                    {tiers.map(t => (
+                      <th key={t} className="text-center py-3 px-4 font-display font-semibold capitalize">{TIER_LIMITS[t].label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonFeatures.map((feat) => (
+                    <tr key={feat.name} className="border-b border-border/50">
+                      <td className="py-3 px-4 text-muted-foreground">{feat.name}</td>
+                      {tiers.map(t => {
+                        const val = feat[t as keyof typeof feat];
+                        return (
+                          <td key={t} className="text-center py-3 px-4">
+                            {val === true ? (
+                              <Check className="w-4 h-4 text-success mx-auto" />
+                            ) : val === false ? (
+                              <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />
+                            ) : (
+                              <span className="text-xs font-medium">{val}</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>

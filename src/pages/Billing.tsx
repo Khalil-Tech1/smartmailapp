@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, X, Gift, Crown } from 'lucide-react';
+import { Check, X, Gift, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,21 +7,39 @@ import { useAuth } from '@/hooks/useAuth';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
 import { useToast } from '@/hooks/use-toast';
 
-const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business', 'enterprise'];
+const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
-const features: { label: string; key: keyof typeof TIER_LIMITS.free }[] = [
-  { label: 'Voice Notes', key: 'voiceNotes' },
-  { label: 'AI-Personalized Messages', key: 'aiMessages' },
-  { label: 'Scheduled Sending', key: 'scheduledSending' },
-  { label: 'Email Marketing Tools', key: 'emailMarketing' },
-  { label: 'Custom Branding', key: 'customBranding' },
-  { label: 'API Access', key: 'apiAccess' },
-];
-
-function formatLimit(val: number | null) {
-  if (val === null) return '∞';
-  return val.toLocaleString();
-}
+const tierFeatureList: Record<SubscriptionTier, string[]> = {
+  free: [
+    'Mail groups & contacts',
+    'Send campaigns',
+    'Voice to text',
+    'Campaign history',
+    'SmartMail badge on emails',
+  ],
+  basic: [
+    'Everything in Free',
+    'Scheduled sending',
+    'Custom signature',
+    'Custom company name',
+  ],
+  pro: [
+    'Everything in Basic',
+    '6 email templates',
+    'Full campaign analytics',
+    'Custom branding & logo',
+    'Remove SmartMail badge',
+  ],
+  business: [
+    'Everything in Pro',
+    '10 templates + builder',
+    'A/B testing',
+    'Contact tagging',
+    'Unsubscribe management',
+    'Campaign archiving',
+    'Ownership transfer',
+  ],
+};
 
 export default function Billing() {
   const { tier, hasUsedTrial, isOnTrial, trialEnd, startTrial } = useAuth();
@@ -35,7 +53,7 @@ export default function Billing() {
       if (success) {
         toast({
           title: '🎉 Free trial started!',
-          description: `Enjoy your ${TIER_LIMITS[targetTier].label} plan free for 2 weeks!`,
+          description: `Enjoy your ${TIER_LIMITS[targetTier].label} plan free for 14 days!`,
         });
       } else {
         toast({ title: 'Error', description: 'Could not start trial. Please try again.', variant: 'destructive' });
@@ -44,8 +62,8 @@ export default function Billing() {
     }
 
     toast({
-      title: 'PayPal Integration Coming Soon',
-      description: 'PayPal subscription billing will be integrated shortly. Stay tuned!',
+      title: 'Payment Integration Coming Soon',
+      description: 'Subscription billing will be integrated shortly. Stay tuned!',
     });
   }
 
@@ -65,16 +83,16 @@ export default function Billing() {
         {!hasUsedTrial && tier === 'free' && (
           <div className="mt-3 flex items-center gap-2 text-sm bg-accent/50 text-accent-foreground rounded-lg px-4 py-2 w-fit">
             <Gift className="w-4 h-4" />
-            <span>You're eligible for a <strong>2-week free trial</strong> on any paid plan!</span>
+            <span>You're eligible for a <strong>14-day free trial</strong> on any paid plan!</span>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {tiers.map((t, i) => {
           const limits = TIER_LIMITS[t];
           const isCurrent = t === tier;
-          const isEnterprise = t === 'enterprise';
+          const isPopular = t === 'pro';
 
           return (
             <motion.div
@@ -83,17 +101,14 @@ export default function Billing() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className={`relative overflow-hidden border ${isCurrent ? 'border-primary shadow-glow' : 'border-border/50'}`}>
-                {isCurrent && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />
-                )}
+              <Card className={`relative overflow-hidden border ${isCurrent ? 'border-primary shadow-glow' : isPopular ? 'border-primary/50' : 'border-border/50'}`}>
+                {isCurrent && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />}
+                {isPopular && !isCurrent && <div className="absolute top-0 left-0 right-0 h-1 bg-primary/50" />}
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="font-display flex items-center gap-1.5 text-base">
-                      {isEnterprise && <Crown className="w-4 h-4 text-primary" />}
-                      {limits.label}
-                    </CardTitle>
+                    <CardTitle className="font-display text-base">{limits.label}</CardTitle>
                     {isCurrent && <Badge className="text-xs">{isOnTrial ? 'Trial' : 'Current'}</Badge>}
+                    {isPopular && !isCurrent && <Badge variant="outline" className="text-xs">Most Popular</Badge>}
                   </div>
                   <div className="mt-1">
                     <span className="text-2xl font-bold font-display">
@@ -106,42 +121,39 @@ export default function Billing() {
                   <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Mail Groups</span>
-                      <span className="font-medium">{formatLimit(limits.maxGroups)}</span>
+                      <span className="font-medium">{limits.maxGroups}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Members/Group</span>
-                      <span className="font-medium">{formatLimit(limits.maxMembersPerGroup)}</span>
+                      <span className="font-medium">{limits.maxMembersPerGroup}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Emails/Month</span>
-                      <span className="font-medium">{formatLimit(limits.maxEmailsPerMonth)}</span>
+                      <span className="font-medium">{limits.maxEmailsPerMonth.toLocaleString()}</span>
                     </div>
-                    {(limits.maxTeamMembers !== null || isEnterprise) && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Team Members</span>
-                        <span className="font-medium">{isEnterprise ? '∞' : limits.maxTeamMembers}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Team Members</span>
+                      <span className="font-medium">{limits.maxTeamMembers}</span>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    {features.map(f => {
-                      const has = limits[f.key];
-                      return (
-                        <div key={f.key} className="flex items-center gap-1.5 text-xs">
-                          {has ? (
-                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                          ) : (
-                            <X className="w-3.5 h-3.5 text-muted-foreground/30 shrink-0" />
-                          )}
-                          <span className={has ? '' : 'text-muted-foreground/50'}>{f.label}</span>
-                        </div>
-                      );
-                    })}
+                    {tierFeatureList[t].map(feat => (
+                      <div key={feat} className="flex items-center gap-1.5 text-xs">
+                        <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                        <span>{feat}</span>
+                      </div>
+                    ))}
                   </div>
 
+                  {limits.price > 0 && !isCurrent && (
+                    <p className="text-xs text-primary font-medium flex items-center gap-1">
+                      <Gift className="w-3 h-3" /> 14-day free trial, cancel anytime
+                    </p>
+                  )}
+
                   <Button
-                    variant={isCurrent ? 'outline' : 'gradient'}
+                    variant={isCurrent ? 'outline' : isPopular ? 'gradient' : 'outline'}
                     className="w-full"
                     size="sm"
                     disabled={isCurrent || t === 'free'}
@@ -150,9 +162,9 @@ export default function Billing() {
                     {isCurrent
                       ? (isOnTrial ? 'On Trial' : 'Current Plan')
                       : t === 'free'
-                        ? 'Free'
+                        ? 'Free Forever'
                         : !hasUsedTrial
-                          ? 'Start Free Trial'
+                          ? 'Start 14 Day Free Trial'
                           : 'Upgrade'}
                   </Button>
                 </CardContent>

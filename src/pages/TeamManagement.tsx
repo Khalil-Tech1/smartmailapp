@@ -71,9 +71,7 @@ export default function TeamManagement() {
   const [teamName, setTeamName] = useState('');
   const [creatingTeam, setCreatingTeam] = useState(false);
 
-  const canManageTeam = !limits.maxTeamMembers && tier !== 'enterprise'
-    ? false
-    : tier === 'pro' || tier === 'business' || tier === 'enterprise';
+  const canManageTeam = tier === 'basic' || tier === 'pro' || tier === 'business';
 
   useEffect(() => {
     if (user && canManageTeam) {

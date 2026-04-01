@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Mail, Users, Send, BarChart3, CreditCard, Settings, LogOut, LayoutDashboard, UsersRound } from 'lucide-react';
+import { Mail, Users, Send, BarChart3, CreditCard, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { TIER_LIMITS } from '@/lib/tier-limits';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +9,7 @@ const navItems: { href: string; icon: any; label: string; tierRequired?: string[
   { href: '/dashboard/groups', icon: Users, label: 'Mail Groups' },
   { href: '/dashboard/compose', icon: Send, label: 'Compose' },
   { href: '/dashboard/history', icon: Mail, label: 'Sent Emails' },
-  { href: '/dashboard/campaigns', icon: BarChart3, label: 'Campaigns', tierRequired: ['pro', 'business'] },
-  { href: '/dashboard/team', icon: UsersRound, label: 'Team', tierRequired: ['basic', 'pro', 'business'] },
+  { href: '/dashboard/campaigns', icon: BarChart3, label: 'Campaigns', tierRequired: ['business', 'enterprise'] },
   { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
@@ -22,6 +21,7 @@ export default function DashboardSidebar() {
 
   return (
     <aside className="w-64 border-r border-border bg-card h-screen flex flex-col">
+      {/* Logo */}
       <div className="p-6 border-b border-border">
         <Link to="/dashboard" className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-lg bg-gradient-primary flex items-center justify-center">
@@ -31,10 +31,11 @@ export default function DashboardSidebar() {
         </Link>
       </div>
 
+      {/* Nav */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
-          const isLocked = item.tierRequired && !item.tierRequired.includes(tier);
+          const isLocked = item.tierRequired && !(Array.isArray(item.tierRequired) ? item.tierRequired.includes(tier) : tier === item.tierRequired);
 
           return (
             <Link
@@ -50,7 +51,7 @@ export default function DashboardSidebar() {
               {item.label}
               {isLocked && (
                 <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0">
-                  {item.tierRequired![0]}+
+                  {Array.isArray(item.tierRequired) ? item.tierRequired[0] : item.tierRequired}+
                 </Badge>
               )}
             </Link>
@@ -58,6 +59,7 @@ export default function DashboardSidebar() {
         })}
       </nav>
 
+      {/* User + tier */}
       <div className="p-4 border-t border-border space-y-3">
         <div className="flex items-center gap-2 px-3">
           <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm font-bold">

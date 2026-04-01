@@ -35,12 +35,12 @@ function LockedOverlay() {
       <div className="bg-muted/50 rounded-full p-6 mb-4">
         <Lock className="w-10 h-10 text-muted-foreground" />
       </div>
-      <h2 className="text-xl font-display font-bold mb-2">Pro Plan Required</h2>
+      <h2 className="text-xl font-display font-bold mb-2">Business Plan Required</h2>
       <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
-        Upgrade to Pro for $19/month to unlock email campaigns with templates, analytics, and more.
+        Email campaigns with templates, analytics, and A/B testing are available on the Business plan.
       </p>
       <Button variant="gradient" onClick={() => navigate('/dashboard/billing')}>
-        Upgrade to Pro
+        Upgrade Now
       </Button>
     </div>
   );
@@ -75,7 +75,7 @@ export default function Campaigns() {
     }
   }, [user]);
 
-  if (tier !== 'business' && tier !== 'pro') return <LockedOverlay />;
+  if (tier !== 'business' && tier !== 'enterprise') return <LockedOverlay />;
 
   async function loadCampaigns() {
     const { data } = await supabase.from('email_campaigns').select('*').order('created_at', { ascending: false });

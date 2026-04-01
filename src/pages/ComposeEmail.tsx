@@ -425,16 +425,18 @@ export default function ComposeEmail() {
                         </Button>
                         {voiceTranscript && (
                           <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={cleanUpTranscript}
-                              disabled={transcribing}
-                              className="gap-1.5"
-                            >
-                              {transcribing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                              Polish with AI
-                            </Button>
+                            {limits.aiMessages && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={cleanUpTranscript}
+                                disabled={transcribing}
+                                className="gap-1.5"
+                              >
+                                {transcribing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                Polish with AI
+                              </Button>
+                            )}
                             <Button variant="outline" size="sm" onClick={insertTranscriptToBody}>
                               Insert into message
                             </Button>

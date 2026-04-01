@@ -17,11 +17,11 @@ export interface TierLimits {
 
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
   free: {
-    maxGroups: 5,
+    maxGroups: 4,
     maxMembersPerGroup: 10,
     maxEmailsPerMonth: 500,
     maxTeamMembers: null,
-    voiceNotes: false,
+    voiceNotes: true,
     aiMessages: false,
     scheduledSending: false,
     emailMarketing: false,

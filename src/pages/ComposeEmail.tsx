@@ -455,6 +455,7 @@ export default function ComposeEmail() {
             </CardContent>
           </Card>
 
+          {limits.scheduledSending && (
           {/* Schedule Card */}
           <Card className="border-border/50">
             <CardHeader>

@@ -456,62 +456,52 @@ export default function ComposeEmail() {
           </Card>
 
           {limits.scheduledSending && (
-          {/* Schedule Card */}
           <Card className="border-border/50">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="font-display text-lg flex items-center gap-2">
                   <Clock className="w-4 h-4" /> Schedule Sending
                 </CardTitle>
-                {!limits.scheduledSending && (
-                  <Badge variant="secondary" className="text-xs">Pro+</Badge>
-                )}
               </div>
             </CardHeader>
             <CardContent>
-              {!limits.scheduledSending ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Upgrade to Pro or higher for scheduled sending
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={scheduleEnabled}
-                      onCheckedChange={(checked) => setScheduleEnabled(checked === true)}
-                    />
-                    <span className="text-sm font-medium">Schedule for later</span>
-                  </label>
-                  {scheduleEnabled && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-1.5">
-                          <Calendar className="w-3 h-3" /> Date
-                        </Label>
-                        <Input
-                          type="date"
-                          value={scheduleDate}
-                          onChange={e => setScheduleDate(e.target.value)}
-                          min={minDate}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3" /> Time
-                        </Label>
-                        <Input
-                          type="time"
-                          value={scheduleTime}
-                          onChange={e => setScheduleTime(e.target.value)}
-                        />
-                      </div>
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={scheduleEnabled}
+                    onCheckedChange={(checked) => setScheduleEnabled(checked === true)}
+                  />
+                  <span className="text-sm font-medium">Schedule for later</span>
+                </label>
+                {scheduleEnabled && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3" /> Date
+                      </Label>
+                      <Input
+                        type="date"
+                        value={scheduleDate}
+                        onChange={e => setScheduleDate(e.target.value)}
+                        min={minDate}
+                      />
                     </div>
-                  )}
-                </div>
-              )}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1.5">
+                        <Clock className="w-3 h-3" /> Time
+                      </Label>
+                      <Input
+                        type="time"
+                        value={scheduleTime}
+                        onChange={e => setScheduleTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
-
+          )}
           {/* Attachments Card */}
           <Card className="border-border/50">
             <CardHeader>

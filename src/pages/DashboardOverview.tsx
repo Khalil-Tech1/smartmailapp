@@ -221,7 +221,7 @@ export default function DashboardOverview() {
             <div className="flex justify-between"><span className="text-muted-foreground">Members per group</span><span className="font-medium">up to {limits.maxMembersPerGroup}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Voice Notes</span><span className="font-medium">{limits.voiceNotes ? '✓' : '✗'}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">AI Messages</span><span className="font-medium">{limits.aiMessages ? '✓' : '✗'}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Scheduled Sending</span><span className="font-medium">{limits.scheduledSending ? '✓' : '✗'}</span></div>
+            {limits.scheduledSending && <div className="flex justify-between"><span className="text-muted-foreground">Scheduled Sending</span><span className="font-medium">✓</span></div>}
             <div className="flex justify-between"><span className="text-muted-foreground">Email Marketing</span><span className="font-medium">{limits.emailMarketing ? '✓' : '✗'}</span></div>
           </CardContent>
         </Card>

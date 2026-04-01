@@ -504,7 +504,8 @@ export default function ComposeEmail() {
             </CardContent>
           </Card>
           )}
-          {/* Attachments Card */}
+          {/* Attachments Card - Basic tier and above */}
+          {tier !== 'free' && (
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle className="font-display text-lg flex items-center gap-2">
@@ -548,6 +549,7 @@ export default function ComposeEmail() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Send Button */}
           <Button onClick={handleSend} variant="gradient" className="w-full" disabled={sending}>

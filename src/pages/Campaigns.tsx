@@ -75,7 +75,7 @@ export default function Campaigns() {
     }
   }, [user]);
 
-  if (tier !== 'business') return <LockedOverlay />;
+  if (tier !== 'business' && tier !== 'pro') return <LockedOverlay />;
 
   async function loadCampaigns() {
     const { data } = await supabase.from('email_campaigns').select('*').order('created_at', { ascending: false });

@@ -52,7 +52,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
-    emailMarketing: false,
+    emailMarketing: true,
     customBranding: false,
     apiAccess: false,
     price: 22,

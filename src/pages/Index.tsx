@@ -168,12 +168,6 @@ export default function Index() {
                             {limits.maxTeamMembers === null ? 'Unlimited' : limits.maxTeamMembers} team members
                           </li>
                         )}
-                        {t === 'enterprise' && (
-                          <li className="flex items-center gap-2">
-                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                            Unlimited team members
-                          </li>
-                        )}
                         {limits.voiceNotes && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Voice notes</li>}
                         {limits.aiMessages && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> AI personalization</li>}
                         {limits.scheduledSending && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Scheduled sending</li>}

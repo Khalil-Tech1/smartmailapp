@@ -74,7 +74,6 @@ export default function Billing() {
         {tiers.map((t, i) => {
           const limits = TIER_LIMITS[t];
           const isCurrent = t === tier;
-          const isEnterprise = t === 'enterprise';
 
           return (
             <motion.div

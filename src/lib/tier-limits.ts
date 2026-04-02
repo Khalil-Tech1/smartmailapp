@@ -63,7 +63,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxGroups: 50,
     maxMembersPerGroup: 500,
     maxEmailsPerMonth: 50000,
-    maxTeamMembers: 15,
+    maxTeamMembers: 6,
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,

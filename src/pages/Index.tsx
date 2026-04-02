@@ -122,7 +122,6 @@ export default function Index() {
             {tiers.map((t, i) => {
               const limits = TIER_LIMITS[t];
               const isPopular = t === 'pro';
-              const isEnterprise = t === 'enterprise';
               return (
                 <motion.div
                   key={t}
@@ -131,9 +130,8 @@ export default function Index() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
                 >
-                  <Card className={`relative overflow-hidden h-full ${isPopular ? 'border-primary shadow-glow' : isEnterprise ? 'border-primary/60 shadow-glow' : 'border-border/50'}`}>
+                  <Card className={`relative overflow-hidden h-full ${isPopular ? 'border-primary shadow-glow' : 'border-border/50'}`}>
                     {isPopular && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />}
-                    {isEnterprise && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent" />}
                     <CardContent className="p-5">
                       <div className="mb-4">
                         <div className="flex items-center gap-1.5">

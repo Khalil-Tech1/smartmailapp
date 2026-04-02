@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Users, Send, Zap, Shield, Clock, ArrowRight, Check, Gift, Crown, Infinity } from 'lucide-react';
+import { Mail, Users, Send, Zap, Shield, Clock, ArrowRight, Check, Gift, Crown, Infinity, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';

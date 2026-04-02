@@ -1,4 +1,4 @@
-export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'business' | 'enterprise';
+export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'business';
 
 export interface TierLimits {
   maxGroups: number | null; // null = unlimited

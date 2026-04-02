@@ -135,7 +135,6 @@ export default function Index() {
                     <CardContent className="p-5">
                       <div className="mb-4">
                         <div className="flex items-center gap-1.5">
-                          {isEnterprise && <Crown className="w-4 h-4 text-primary" />}
                           <h3 className="font-display font-bold text-lg">{limits.label}</h3>
                         </div>
                         {isPopular && (

@@ -212,7 +212,13 @@ export default function Index() {
             </div>
             <span className="font-display font-semibold text-foreground">SmartMail</span>
           </div>
-          <p>&copy; {new Date().getFullYear()} SmartMail. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <a href="https://wa.me/2349169433809" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-muted-foreground hover:text-green-500 transition-colors">
+              <MessageCircle className="w-5 h-5" />
+              <span>WhatsApp</span>
+            </a>
+            <p>&copy; {new Date().getFullYear()} SmartMail. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>

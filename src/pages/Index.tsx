@@ -14,7 +14,7 @@ const features = [
   { icon: Mail, title: 'Marketing Tools', desc: 'Templates, campaigns, and analytics for growth.' },
 ];
 
-const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business', 'enterprise'];
+const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
 function formatLimit(val: number | null) {
   if (val === null) return 'Unlimited';

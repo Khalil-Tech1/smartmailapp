@@ -74,18 +74,4 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 
     label: 'Business',
   },
-  enterprise: {
-    maxGroups: null,
-    maxMembersPerGroup: null,
-    maxEmailsPerMonth: 250000,
-    maxTeamMembers: null,
-    voiceNotes: true,
-    aiMessages: true,
-    scheduledSending: true,
-    emailMarketing: true,
-    customBranding: true,
-    apiAccess: true,
-    price: 99,
-    label: 'Enterprise',
-  },
 };

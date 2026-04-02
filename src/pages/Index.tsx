@@ -181,7 +181,7 @@ export default function Index() {
                         </p>
                       )}
                       <Link to="/auth">
-                        <Button variant={isPopular || isEnterprise ? 'gradient' : 'outline'} className="w-full" size="sm">
+                        <Button variant={isPopular ? 'gradient' : 'outline'} className="w-full" size="sm">
                           {limits.price === 0 ? 'Get Started' : 'Start Free Trial'}
                         </Button>
                       </Link>

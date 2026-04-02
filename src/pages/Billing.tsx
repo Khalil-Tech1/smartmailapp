@@ -114,10 +114,10 @@ export default function Billing() {
                       <span className="text-muted-foreground">Emails/Month</span>
                       <span className="font-medium">{formatLimit(limits.maxEmailsPerMonth)}</span>
                     </div>
-                    {(limits.maxTeamMembers !== null || isEnterprise) && (
+                    {limits.maxTeamMembers !== null && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Team Members</span>
-                        <span className="font-medium">{isEnterprise ? '∞' : limits.maxTeamMembers}</span>
+                        <span className="font-medium">{limits.maxTeamMembers}</span>
                       </div>
                     )}
                   </div>

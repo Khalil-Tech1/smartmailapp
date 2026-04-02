@@ -1,4 +1,4 @@
-export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'business' | 'enterprise';
+export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'business';
 
 export interface TierLimits {
   maxGroups: number | null; // null = unlimited
@@ -48,7 +48,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxGroups: 20,
     maxMembersPerGroup: 200,
     maxEmailsPerMonth: 20000,
-    maxTeamMembers: 5,
+    maxTeamMembers: 3,
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
@@ -56,13 +56,14 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     customBranding: false,
     apiAccess: false,
     price: 22,
+
     label: 'Pro',
   },
   business: {
     maxGroups: 50,
     maxMembersPerGroup: 500,
     maxEmailsPerMonth: 50000,
-    maxTeamMembers: 15,
+    maxTeamMembers: 6,
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
@@ -70,20 +71,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     customBranding: false,
     apiAccess: false,
     price: 35,
+
     label: 'Business',
-  },
-  enterprise: {
-    maxGroups: null,
-    maxMembersPerGroup: null,
-    maxEmailsPerMonth: 250000,
-    maxTeamMembers: null,
-    voiceNotes: true,
-    aiMessages: true,
-    scheduledSending: true,
-    emailMarketing: true,
-    customBranding: true,
-    apiAccess: true,
-    price: 99,
-    label: 'Enterprise',
   },
 };

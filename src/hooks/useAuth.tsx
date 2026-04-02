@@ -69,7 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('user_id', userId);
         setTier('free');
       } else {
-        setTier(data.subscription_tier);
+        const dbTier = data.subscription_tier;
+        setTier(dbTier === 'enterprise' ? 'business' : dbTier as SubscriptionTier);
       }
       setHasUsedTrial(data.has_used_trial);
       setTrialEnd(data.trial_end);

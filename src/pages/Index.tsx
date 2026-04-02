@@ -14,7 +14,7 @@ const features = [
   { icon: Mail, title: 'Marketing Tools', desc: 'Templates, campaigns, and analytics for growth.' },
 ];
 
-const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business', 'enterprise'];
+const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
 function formatLimit(val: number | null) {
   if (val === null) return 'Unlimited';
@@ -118,11 +118,10 @@ export default function Index() {
               <span>All paid plans include a <strong>2-week free trial</strong> for new users</span>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {tiers.map((t, i) => {
               const limits = TIER_LIMITS[t];
               const isPopular = t === 'pro';
-              const isEnterprise = t === 'enterprise';
               return (
                 <motion.div
                   key={t}
@@ -131,13 +130,11 @@ export default function Index() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
                 >
-                  <Card className={`relative overflow-hidden h-full ${isPopular ? 'border-primary shadow-glow' : isEnterprise ? 'border-primary/60 shadow-glow' : 'border-border/50'}`}>
+                  <Card className={`relative overflow-hidden h-full ${isPopular ? 'border-primary shadow-glow' : 'border-border/50'}`}>
                     {isPopular && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />}
-                    {isEnterprise && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent" />}
                     <CardContent className="p-5">
                       <div className="mb-4">
                         <div className="flex items-center gap-1.5">
-                          {isEnterprise && <Crown className="w-4 h-4 text-primary" />}
                           <h3 className="font-display font-bold text-lg">{limits.label}</h3>
                         </div>
                         {isPopular && (
@@ -171,12 +168,6 @@ export default function Index() {
                             {limits.maxTeamMembers === null ? 'Unlimited' : limits.maxTeamMembers} team members
                           </li>
                         )}
-                        {t === 'enterprise' && (
-                          <li className="flex items-center gap-2">
-                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                            Unlimited team members
-                          </li>
-                        )}
                         {limits.voiceNotes && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Voice notes</li>}
                         {limits.aiMessages && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> AI personalization</li>}
                         {limits.scheduledSending && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Scheduled sending</li>}
@@ -190,7 +181,7 @@ export default function Index() {
                         </p>
                       )}
                       <Link to="/auth">
-                        <Button variant={isPopular || isEnterprise ? 'gradient' : 'outline'} className="w-full" size="sm">
+                        <Button variant={isPopular ? 'gradient' : 'outline'} className="w-full" size="sm">
                           {limits.price === 0 ? 'Get Started' : 'Start Free Trial'}
                         </Button>
                       </Link>

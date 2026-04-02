@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
 import { useToast } from '@/hooks/use-toast';
 
-const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business', 'enterprise'];
+const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
 const features: { label: string; key: keyof typeof TIER_LIMITS.free }[] = [
   { label: 'Voice Notes', key: 'voiceNotes' },

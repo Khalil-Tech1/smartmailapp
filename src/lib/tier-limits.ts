@@ -56,6 +56,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     customBranding: false,
     apiAccess: false,
     price: 22,
+
     label: 'Pro',
   },
   business: {

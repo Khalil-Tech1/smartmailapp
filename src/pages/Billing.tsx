@@ -89,7 +89,6 @@ export default function Billing() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="font-display flex items-center gap-1.5 text-base">
-                      {isEnterprise && <Crown className="w-4 h-4 text-primary" />}
                       {limits.label}
                     </CardTitle>
                     {isCurrent && <Badge className="text-xs">{isOnTrial ? 'Trial' : 'Current'}</Badge>}

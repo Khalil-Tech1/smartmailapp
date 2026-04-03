@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,15 +8,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { Trash2, Loader2, AlertTriangle, Users } from 'lucide-react';
+import TransferOwnership from '@/components/teams/TransferOwnership';
 
 export default function DashboardSettings() {
-  const { user, signOut } = useAuth();
+  const { user, tier, signOut } = useAuth();
   const { toast } = useToast();
   const [fullName, setFullName] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleting, setDeleting] = useState(false);
+
+  // Team state (Business tier)
+  const [team, setTeam] = useState<{ id: string; owner_id: string } | null>(null);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user && tier === 'business') loadTeam();
+  }, [user, tier]);
+
+  async function loadTeam() {
+    if (!user) return;
+    const { data: ownedTeam } = await supabase.from('teams').select('id, owner_id').eq('owner_id', user.id).maybeSingle();
+    if (ownedTeam) {
+      setTeam(ownedTeam);
+      const { data: members } = await supabase.from('team_members').select('*').eq('team_id', ownedTeam.id);
+      setTeamMembers(members || []);
+    }
+  }
 
   async function updateProfile() {
     if (!user) return;
@@ -73,6 +92,28 @@ export default function DashboardSettings() {
           <Button variant="gradient" onClick={updateProfile}>Save Changes</Button>
         </CardContent>
       </Card>
+
+      {/* Transfer Ownership - Business tier only */}
+      {tier === 'business' && team && (
+        <Card className="max-w-lg border-border/50 mb-6">
+          <CardHeader>
+            <CardTitle className="font-display flex items-center gap-2">
+              <Users className="w-5 h-5" /> Team Ownership
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Transfer ownership of your team to another member. The new owner will have full control over the team.
+            </p>
+            <TransferOwnership
+              teamId={team.id}
+              currentOwnerId={team.owner_id}
+              members={teamMembers}
+              onTransferred={loadTeam}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="max-w-lg border-destructive/30">
         <CardHeader>

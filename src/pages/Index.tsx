@@ -169,9 +169,10 @@ export default function Index() {
                           </li>
                         )}
                         {limits.voiceNotes && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Voice notes</li>}
-                        {limits.aiMessages && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> AI personalization</li>}
                         {limits.scheduledSending && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Scheduled sending</li>}
+                        {limits.fileAttachments && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> File attachments</li>}
                         {limits.emailMarketing && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Marketing tools</li>}
+                        {limits.campaignManagement && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Campaign management</li>}
                         {limits.customBranding && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Custom branding</li>}
                         {limits.apiAccess && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> API access</li>}
                       </ul>

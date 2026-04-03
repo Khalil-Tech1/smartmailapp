@@ -13,7 +13,9 @@ const features: { label: string; key: keyof typeof TIER_LIMITS.free }[] = [
   { label: 'Voice Notes', key: 'voiceNotes' },
   { label: 'AI-Personalized Messages', key: 'aiMessages' },
   { label: 'Scheduled Sending', key: 'scheduledSending' },
+  { label: 'File Attachments', key: 'fileAttachments' },
   { label: 'Email Marketing Tools', key: 'emailMarketing' },
+  { label: 'Campaign Management', key: 'campaignManagement' },
   { label: 'Custom Branding', key: 'customBranding' },
   { label: 'API Access', key: 'apiAccess' },
 ];

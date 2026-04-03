@@ -1,14 +1,16 @@
 export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'business';
 
 export interface TierLimits {
-  maxGroups: number | null; // null = unlimited
-  maxMembersPerGroup: number | null; // null = unlimited
-  maxEmailsPerMonth: number | null; // null = unlimited
-  maxTeamMembers: number | null; // null = unlimited
+  maxGroups: number | null;
+  maxMembersPerGroup: number | null;
+  maxEmailsPerMonth: number | null;
+  maxTeamMembers: number | null;
   voiceNotes: boolean;
   aiMessages: boolean;
   scheduledSending: boolean;
+  fileAttachments: boolean;
   emailMarketing: boolean;
+  campaignManagement: boolean;
   customBranding: boolean;
   apiAccess: boolean;
   price: number;
@@ -24,7 +26,9 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: false,
+    fileAttachments: false,
     emailMarketing: false,
+    campaignManagement: false,
     customBranding: false,
     apiAccess: false,
     price: 0,
@@ -38,7 +42,9 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
+    fileAttachments: true,
     emailMarketing: false,
+    campaignManagement: false,
     customBranding: false,
     apiAccess: false,
     price: 13,
@@ -52,11 +58,12 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
+    fileAttachments: false,
     emailMarketing: true,
+    campaignManagement: false,
     customBranding: false,
     apiAccess: false,
     price: 22,
-
     label: 'Pro',
   },
   business: {
@@ -67,11 +74,12 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
+    fileAttachments: false,
     emailMarketing: true,
+    campaignManagement: true,
     customBranding: false,
     apiAccess: false,
     price: 35,
-
     label: 'Business',
   },
 };

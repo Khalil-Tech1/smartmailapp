@@ -504,8 +504,8 @@ export default function ComposeEmail() {
             </CardContent>
           </Card>
           )}
-          {/* Attachments Card - Basic tier and above */}
-          {tier !== 'free' && (
+          {/* Attachments Card - Basic tier only */}
+          {limits.fileAttachments && (
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle className="font-display text-lg flex items-center gap-2">

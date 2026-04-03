@@ -1,22 +1,21 @@
 import { useEffect, useState } from 'react';
 import {
   BarChart3, Plus, Send, Loader2, Eye, MousePointer, Lock,
-  FileText, GitBranch, TrendingUp, Sparkles,
+  FileText, GitBranch, TrendingUp, Archive, RotateCcw, Trash2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { Tables } from '@/integrations/supabase/types';
 import TemplateSelector from '@/components/campaigns/TemplateSelector';
 import EmailBlockEditor from '@/components/campaigns/EmailBlockEditor';
@@ -35,9 +34,9 @@ function LockedOverlay() {
       <div className="bg-muted/50 rounded-full p-6 mb-4">
         <Lock className="w-10 h-10 text-muted-foreground" />
       </div>
-      <h2 className="text-xl font-display font-bold mb-2">Business Plan Required</h2>
+      <h2 className="text-xl font-display font-bold mb-2">Pro Plan Required</h2>
       <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
-        Email campaigns with templates, analytics, and A/B testing are available on the Business plan.
+        Email campaigns with templates, analytics, and A/B testing are available on Pro and Business plans.
       </p>
       <Button variant="gradient" onClick={() => navigate('/dashboard/billing')}>
         Upgrade Now
@@ -168,14 +167,55 @@ export default function Campaigns() {
     }
   }
 
+  async function archiveCampaign(campaign: Campaign) {
+    const { error } = await supabase.from('email_campaigns').update({ status: 'archived' }).eq('id', campaign.id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Campaign archived' });
+      loadCampaigns();
+      setDetailCampaign(null);
+    }
+  }
+
+  async function restoreCampaign(campaign: Campaign) {
+    const newStatus = campaign.sent_at ? 'sent' : 'draft';
+    const { error } = await supabase.from('email_campaigns').update({ status: newStatus }).eq('id', campaign.id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Campaign restored' });
+      loadCampaigns();
+    }
+  }
+
+  async function deleteCampaign(campaign: Campaign) {
+    if (campaign.status === 'sent' || campaign.status === 'archived') {
+      toast({ title: 'Cannot delete', description: 'Sent campaigns can only be archived, not deleted.', variant: 'destructive' });
+      return;
+    }
+    const { error } = await supabase.from('email_campaigns').delete().eq('id', campaign.id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Campaign deleted' });
+      loadCampaigns();
+      setDetailCampaign(null);
+    }
+  }
+
   const statusColor = (status: string) => {
     switch (status) {
       case 'sent': return 'bg-success/10 text-success';
       case 'draft': return 'bg-muted text-muted-foreground';
       case 'scheduled': return 'bg-warning/10 text-warning';
+      case 'archived': return 'bg-muted/50 text-muted-foreground/70';
       default: return 'bg-muted text-muted-foreground';
     }
   };
+
+  const activeCampaigns = campaigns.filter(c => c.status !== 'archived');
+  const archivedCampaigns = campaigns.filter(c => c.status === 'archived');
 
   return (
     <div>
@@ -193,11 +233,12 @@ export default function Campaigns() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList>
           <TabsTrigger value="campaigns" className="gap-1"><FileText className="w-3.5 h-3.5" /> Campaigns</TabsTrigger>
+          <TabsTrigger value="archived" className="gap-1"><Archive className="w-3.5 h-3.5" /> Archived</TabsTrigger>
           <TabsTrigger value="analytics" className="gap-1"><TrendingUp className="w-3.5 h-3.5" /> Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="campaigns" className="mt-4">
-          {campaigns.length === 0 ? (
+          {activeCampaigns.length === 0 ? (
             <Card className="border-border/50">
               <CardContent className="text-center py-16">
                 <BarChart3 className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
@@ -207,7 +248,7 @@ export default function Campaigns() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {campaigns.map(campaign => (
+              {activeCampaigns.map(campaign => (
                 <Card key={campaign.id} className="border-border/50 hover:shadow-sm transition-shadow">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between">
@@ -215,7 +256,7 @@ export default function Campaigns() {
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="font-display font-semibold text-lg">{campaign.name}</h3>
                           <Badge className={`capitalize text-xs ${statusColor(campaign.status)}`}>{campaign.status}</Badge>
-                          {(campaign as any).is_ab_test && (
+                          {campaign.is_ab_test && (
                             <Badge variant="outline" className="text-[10px] gap-1"><GitBranch className="w-3 h-3" /> A/B</Badge>
                           )}
                         </div>
@@ -228,12 +269,60 @@ export default function Campaigns() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        {campaign.status === 'draft' && !(campaign as any).is_ab_test && (
+                        {campaign.status === 'draft' && !campaign.is_ab_test && (
                           <Button variant="gradient" size="sm" onClick={() => sendCampaign(campaign)}>
                             <Send className="w-3 h-3 mr-1" /> Send
                           </Button>
                         )}
+                        {campaign.status === 'sent' && (
+                          <Button variant="outline" size="sm" onClick={() => archiveCampaign(campaign)}>
+                            <Archive className="w-3 h-3 mr-1" /> Archive
+                          </Button>
+                        )}
+                        {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteCampaign(campaign)}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        )}
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="archived" className="mt-4">
+          {archivedCampaigns.length === 0 ? (
+            <Card className="border-border/50">
+              <CardContent className="text-center py-16">
+                <Archive className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                <h3 className="text-lg font-display font-semibold mb-2">No Archived Campaigns</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">Archived campaigns will appear here.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {archivedCampaigns.map(campaign => (
+                <Card key={campaign.id} className="border-border/50 opacity-75 hover:opacity-100 transition-opacity">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-display font-semibold text-lg">{campaign.name}</h3>
+                          <Badge className="capitalize text-xs bg-muted/50 text-muted-foreground/70">archived</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">{campaign.subject}</p>
+                        <div className="flex items-center gap-6 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1"><Send className="w-3 h-3" /> {campaign.sent_count || 0} sent</span>
+                          <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {campaign.open_count || 0} opens</span>
+                          <span>{new Date(campaign.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => restoreCampaign(campaign)}>
+                        <RotateCcw className="w-3 h-3 mr-1" /> Restore
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -348,7 +437,7 @@ export default function Campaigns() {
         </DialogContent>
       </Dialog>
 
-      {/* Campaign detail dialog with A/B testing */}
+      {/* Campaign detail dialog */}
       <Dialog open={!!detailCampaign} onOpenChange={v => { if (!v) setDetailCampaign(null); }}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           {detailCampaign && (
@@ -360,7 +449,7 @@ export default function Campaigns() {
                 </DialogTitle>
               </DialogHeader>
               <div className="mt-4">
-                {(detailCampaign as any).is_ab_test ? (
+                {detailCampaign.is_ab_test ? (
                   <ABTestSetup
                     campaignId={detailCampaign.id}
                     campaignSubject={detailCampaign.subject}
@@ -386,11 +475,23 @@ export default function Campaigns() {
                       <span><Eye className="w-3 h-3 inline mr-1" />{detailCampaign.open_count || 0} opens</span>
                       <span><MousePointer className="w-3 h-3 inline mr-1" />{detailCampaign.click_count || 0} clicks</span>
                     </div>
-                    {detailCampaign.status === 'draft' && (
-                      <Button variant="gradient" onClick={() => { sendCampaign(detailCampaign); setDetailCampaign(null); }}>
-                        <Send className="w-4 h-4 mr-2" /> Send Campaign
-                      </Button>
-                    )}
+                    <div className="flex gap-2">
+                      {detailCampaign.status === 'draft' && (
+                        <>
+                          <Button variant="gradient" onClick={() => { sendCampaign(detailCampaign); setDetailCampaign(null); }}>
+                            <Send className="w-4 h-4 mr-2" /> Send Campaign
+                          </Button>
+                          <Button variant="ghost" className="text-destructive" onClick={() => deleteCampaign(detailCampaign)}>
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          </Button>
+                        </>
+                      )}
+                      {detailCampaign.status === 'sent' && (
+                        <Button variant="outline" onClick={() => archiveCampaign(detailCampaign)}>
+                          <Archive className="w-4 h-4 mr-2" /> Archive
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

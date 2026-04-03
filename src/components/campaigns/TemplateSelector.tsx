@@ -1,16 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Save, Loader2, Trash2, Upload } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { PRESET_TEMPLATES, type EmailTemplate } from '@/lib/email-templates';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface TemplateSelectorProps {
   onSelect: (template: EmailTemplate) => void;
@@ -18,259 +11,50 @@ interface TemplateSelectorProps {
 }
 
 export default function TemplateSelector({ onSelect, selectedId }: TemplateSelectorProps) {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [customTemplates, setCustomTemplates] = useState<EmailTemplate[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [uploadName, setUploadName] = useState('');
-  const [uploadHeading, setUploadHeading] = useState('');
-  const [uploadBody, setUploadBody] = useState('');
-  const [uploadCta, setUploadCta] = useState('');
-  const [uploadCtaUrl, setUploadCtaUrl] = useState('');
-  const [uploadFooter, setUploadFooter] = useState('');
-  const [uploadColor, setUploadColor] = useState('#3b82f6');
-  const [saving, setSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (user) loadCustomTemplates();
-  }, [user]);
-
-  async function loadCustomTemplates() {
-    setLoading(true);
-    const { data } = await supabase
-      .from('email_templates')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (data) {
-      setCustomTemplates(data.map(t => ({
-        id: t.id,
-        name: t.name,
-        category: t.category,
-        description: 'Custom template',
-        primaryColor: t.primary_color || '#3b82f6',
-        blocks: [
-          { id: '1', type: 'heading' as const, content: t.heading, align: 'center' as const },
-          { id: '2', type: 'text' as const, content: t.body_text, align: 'left' as const },
-          ...(t.cta_text ? [{ id: '3', type: 'button' as const, content: t.cta_text, url: t.cta_url || '', align: 'center' as const }] : []),
-          ...(t.footer_text ? [{ id: '4', type: 'footer' as const, content: t.footer_text, align: 'center' as const }] : []),
-        ],
-      })));
-    }
-    setLoading(false);
-  }
-
-  async function deleteCustomTemplate(id: string) {
-    await supabase.from('email_templates').delete().eq('id', id);
-    toast({ title: 'Template deleted' });
-    loadCustomTemplates();
-  }
-
-  async function uploadTemplate() {
-    if (!user || !uploadName.trim() || !uploadHeading.trim()) {
-      toast({ title: 'Fill required fields', description: 'Name and heading are required.', variant: 'destructive' });
-      return;
-    }
-    setSaving(true);
-    try {
-      const { error } = await supabase.from('email_templates').insert({
-        user_id: user.id,
-        name: uploadName.trim(),
-        heading: uploadHeading.trim(),
-        body_text: uploadBody.trim(),
-        cta_text: uploadCta.trim() || null,
-        cta_url: uploadCtaUrl.trim() || null,
-        footer_text: uploadFooter.trim() || null,
-        primary_color: uploadColor,
-        category: 'custom',
-      });
-      if (error) throw error;
-      toast({ title: 'Template uploaded!' });
-      setShowUploadDialog(false);
-      setUploadName(''); setUploadHeading(''); setUploadBody('');
-      setUploadCta(''); setUploadCtaUrl(''); setUploadFooter('');
-      loadCustomTemplates();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleHtmlFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    // Extract title from HTML
-    const titleMatch = text.match(/<title>(.*?)<\/title>/i);
-    setUploadName(titleMatch?.[1] || file.name.replace(/\.html?$/i, ''));
-    setUploadHeading(titleMatch?.[1] || 'Imported Template');
-    setUploadBody(text);
-    setShowUploadDialog(true);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }
-
   const allPreset = PRESET_TEMPLATES;
   const categories = ['all', ...new Set(allPreset.map(t => t.category))];
-
   const [activeCategory, setActiveCategory] = useState('all');
   const filtered = activeCategory === 'all' ? allPreset : allPreset.filter(t => t.category === activeCategory);
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="presets">
-        <TabsList className="w-full">
-          <TabsTrigger value="presets" className="flex-1">Pre-designed</TabsTrigger>
-          <TabsTrigger value="custom" className="flex-1">My Templates</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="presets" className="mt-4">
-          <div className="flex gap-2 flex-wrap mb-4">
-            {categories.map(cat => (
-              <Button
-                key={cat}
-                size="sm"
-                variant={activeCategory === cat ? 'default' : 'outline'}
-                onClick={() => setActiveCategory(cat)}
-                className="capitalize text-xs"
-              >
-                {cat}
-              </Button>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {filtered.map(template => (
-              <Card
-                key={template.id}
-                className={`cursor-pointer transition-all hover:shadow-md border-2 ${
-                  selectedId === template.id ? 'border-primary' : 'border-border/50'
-                }`}
-                onClick={() => onSelect(template)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ background: template.primaryColor }}
-                    />
-                  </div>
-                  <h4 className="font-semibold text-sm mb-1">{template.name}</h4>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{template.description}</p>
-                  <Badge variant="secondary" className="mt-2 text-[10px] capitalize">{template.category}</Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="custom" className="mt-4">
-          <div className="flex gap-2 mb-4">
-            <Dialog open={showUploadDialog} onOpenChange={v => { setShowUploadDialog(v); }}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Upload className="w-3.5 h-3.5" /> Upload Template
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle className="font-display">Upload Custom Template</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-3 mt-4">
-                  <div className="space-y-1">
-                    <Label>Template Name *</Label>
-                    <Input placeholder="My Newsletter" value={uploadName} onChange={e => setUploadName(e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Heading *</Label>
-                    <Input placeholder="Email heading" value={uploadHeading} onChange={e => setUploadHeading(e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Body Content</Label>
-                    <textarea
-                      className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      placeholder="Email body text or paste HTML..."
-                      value={uploadBody}
-                      onChange={e => setUploadBody(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label>CTA Button Text</Label>
-                      <Input placeholder="Click Here" value={uploadCta} onChange={e => setUploadCta(e.target.value)} />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>CTA URL</Label>
-                      <Input placeholder="https://..." value={uploadCtaUrl} onChange={e => setUploadCtaUrl(e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Footer Text</Label>
-                    <Input placeholder="© 2026 Your Company" value={uploadFooter} onChange={e => setUploadFooter(e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Primary Color</Label>
-                    <div className="flex gap-2 items-center">
-                      <input type="color" value={uploadColor} onChange={e => setUploadColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
-                      <span className="text-xs text-muted-foreground">{uploadColor}</span>
-                    </div>
-                  </div>
-                  <Button onClick={uploadTemplate} variant="gradient" className="w-full" disabled={saving}>
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                    Save Template
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            <div>
-              <input ref={fileInputRef} type="file" accept=".html,.htm" onChange={handleHtmlFileUpload} className="hidden" />
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => fileInputRef.current?.click()}>
-                <FileText className="w-3.5 h-3.5" /> Import HTML
-              </Button>
-            </div>
-          </div>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : customTemplates.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Save className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No saved templates yet.</p>
-              <p className="text-xs mt-1">Upload a template or import an HTML file to get started.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {customTemplates.map(template => (
-                <Card
-                  key={template.id}
-                  className={`cursor-pointer transition-all hover:shadow-md border-2 ${
-                    selectedId === template.id ? 'border-primary' : 'border-border/50'
-                  }`}
-                  onClick={() => onSelect(template)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <FileText className="w-5 h-5 text-muted-foreground" />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6"
-                        onClick={(e) => { e.stopPropagation(); deleteCustomTemplate(template.id); }}
-                      >
-                        <Trash2 className="w-3 h-3 text-destructive" />
-                      </Button>
-                    </div>
-                    <h4 className="font-semibold text-sm">{template.name}</h4>
-                    <Badge variant="secondary" className="mt-2 text-[10px]">Custom</Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      <div className="flex gap-2 flex-wrap mb-4">
+        {categories.map(cat => (
+          <Button
+            key={cat}
+            size="sm"
+            variant={activeCategory === cat ? 'default' : 'outline'}
+            onClick={() => setActiveCategory(cat)}
+            className="capitalize text-xs"
+          >
+            {cat}
+          </Button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {filtered.map(template => (
+          <Card
+            key={template.id}
+            className={`cursor-pointer transition-all hover:shadow-md border-2 ${
+              selectedId === template.id ? 'border-primary' : 'border-border/50'
+            }`}
+            onClick={() => onSelect(template)}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-2">
+                <FileText className="w-5 h-5 text-muted-foreground" />
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{ background: template.primaryColor }}
+                />
+              </div>
+              <h4 className="font-semibold text-sm mb-1">{template.name}</h4>
+              <p className="text-xs text-muted-foreground line-clamp-2">{template.description}</p>
+              <Badge variant="secondary" className="mt-2 text-[10px] capitalize">{template.category}</Badge>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

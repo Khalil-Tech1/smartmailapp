@@ -1,14 +1,16 @@
 export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'business';
 
 export interface TierLimits {
-  maxGroups: number | null; // null = unlimited
-  maxMembersPerGroup: number | null; // null = unlimited
-  maxEmailsPerMonth: number | null; // null = unlimited
-  maxTeamMembers: number | null; // null = unlimited
+  maxGroups: number | null;
+  maxMembersPerGroup: number | null;
+  maxEmailsPerMonth: number | null;
+  maxTeamMembers: number | null;
   voiceNotes: boolean;
   aiMessages: boolean;
   scheduledSending: boolean;
+  fileAttachments: boolean;
   emailMarketing: boolean;
+  campaignManagement: boolean;
   customBranding: boolean;
   apiAccess: boolean;
   price: number;

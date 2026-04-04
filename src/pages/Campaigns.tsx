@@ -233,7 +233,7 @@ export default function Campaigns() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList>
           <TabsTrigger value="campaigns" className="gap-1"><FileText className="w-3.5 h-3.5" /> Campaigns</TabsTrigger>
-          <TabsTrigger value="archived" className="gap-1"><Archive className="w-3.5 h-3.5" /> Archived</TabsTrigger>
+          {tier === 'business' && <TabsTrigger value="archived" className="gap-1"><Archive className="w-3.5 h-3.5" /> Archived</TabsTrigger>}
           <TabsTrigger value="analytics" className="gap-1"><TrendingUp className="w-3.5 h-3.5" /> Analytics</TabsTrigger>
         </TabsList>
 

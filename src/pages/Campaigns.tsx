@@ -36,7 +36,7 @@ function LockedOverlay() {
       </div>
       <h2 className="text-xl font-display font-bold mb-2">Pro Plan Required</h2>
       <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
-        Email campaigns with templates, analytics, and A/B testing are available on Pro and Business plans.
+        Email campaigns with templates and analytics are available on Pro and Business plans.
       </p>
       <Button variant="gradient" onClick={() => navigate('/dashboard/billing')}>
         Upgrade Now

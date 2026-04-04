@@ -274,7 +274,7 @@ export default function Campaigns() {
                             <Send className="w-3 h-3 mr-1" /> Send
                           </Button>
                         )}
-                        {campaign.status === 'sent' && (
+                        {campaign.status === 'sent' && tier === 'business' && (
                           <Button variant="outline" size="sm" onClick={() => archiveCampaign(campaign)}>
                             <Archive className="w-3 h-3 mr-1" /> Archive
                           </Button>

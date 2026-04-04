@@ -14,6 +14,7 @@ import SentEmails from "./pages/SentEmails";
 import Billing from "./pages/Billing";
 import DashboardSettings from "./pages/DashboardSettings";
 import Campaigns from "./pages/Campaigns";
+import Teams from "./pages/Teams";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="compose" element={<ComposeEmail />} />
               <Route path="history" element={<SentEmails />} />
               <Route path="campaigns" element={<Campaigns />} />
+              <Route path="teams" element={<Teams />} />
               <Route path="billing" element={<Billing />} />
               <Route path="settings" element={<DashboardSettings />} />
             </Route>

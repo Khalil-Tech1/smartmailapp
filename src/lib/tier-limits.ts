@@ -60,7 +60,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     scheduledSending: true,
     fileAttachments: false,
     emailMarketing: true,
-    campaignManagement: false,
+    campaignManagement: true,
     customBranding: false,
     apiAccess: false,
     price: 22,

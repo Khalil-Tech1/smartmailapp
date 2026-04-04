@@ -9,7 +9,7 @@ const navItems: { href: string; icon: any; label: string; tierRequired?: string[
   { href: '/dashboard/groups', icon: Users, label: 'Mail Groups' },
   { href: '/dashboard/compose', icon: Send, label: 'Compose' },
   { href: '/dashboard/history', icon: Mail, label: 'Sent Emails' },
-  { href: '/dashboard/campaigns', icon: BarChart3, label: 'Campaigns', tierRequired: ['business'] },
+  { href: '/dashboard/campaigns', icon: BarChart3, label: 'Campaigns', tierRequired: ['pro', 'business'] },
   { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];

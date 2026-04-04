@@ -14,6 +14,7 @@ import SentEmails from "./pages/SentEmails";
 import Billing from "./pages/Billing";
 import DashboardSettings from "./pages/DashboardSettings";
 import Campaigns from "./pages/Campaigns";
+import Teams from "./pages/Teams";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

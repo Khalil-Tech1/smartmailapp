@@ -36,7 +36,7 @@ function LockedOverlay() {
       </div>
       <h2 className="text-xl font-display font-bold mb-2">Pro Plan Required</h2>
       <p className="text-muted-foreground text-sm text-center max-w-md mb-6">
-        Email campaigns with templates, analytics, and A/B testing are available on Pro and Business plans.
+        Email campaigns with templates and analytics are available on Pro and Business plans.
       </p>
       <Button variant="gradient" onClick={() => navigate('/dashboard/billing')}>
         Upgrade Now
@@ -74,7 +74,7 @@ export default function Campaigns() {
     }
   }, [user]);
 
-  if (tier !== 'business') return <LockedOverlay />;
+  if (tier !== 'business' && tier !== 'pro') return <LockedOverlay />;
 
   async function loadCampaigns() {
     const { data } = await supabase.from('email_campaigns').select('*').order('created_at', { ascending: false });
@@ -233,7 +233,7 @@ export default function Campaigns() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList>
           <TabsTrigger value="campaigns" className="gap-1"><FileText className="w-3.5 h-3.5" /> Campaigns</TabsTrigger>
-          <TabsTrigger value="archived" className="gap-1"><Archive className="w-3.5 h-3.5" /> Archived</TabsTrigger>
+          {tier === 'business' && <TabsTrigger value="archived" className="gap-1"><Archive className="w-3.5 h-3.5" /> Archived</TabsTrigger>}
           <TabsTrigger value="analytics" className="gap-1"><TrendingUp className="w-3.5 h-3.5" /> Analytics</TabsTrigger>
         </TabsList>
 
@@ -274,7 +274,7 @@ export default function Campaigns() {
                             <Send className="w-3 h-3 mr-1" /> Send
                           </Button>
                         )}
-                        {campaign.status === 'sent' && (
+                        {campaign.status === 'sent' && tier === 'business' && (
                           <Button variant="outline" size="sm" onClick={() => archiveCampaign(campaign)}>
                             <Archive className="w-3 h-3 mr-1" /> Archive
                           </Button>
@@ -486,7 +486,7 @@ export default function Campaigns() {
                           </Button>
                         </>
                       )}
-                      {detailCampaign.status === 'sent' && (
+                      {detailCampaign.status === 'sent' && tier === 'business' && (
                         <Button variant="outline" onClick={() => archiveCampaign(detailCampaign)}>
                           <Archive className="w-4 h-4 mr-2" /> Archive
                         </Button>

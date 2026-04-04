@@ -35,6 +35,7 @@ const App = () => (
               <Route path="compose" element={<ComposeEmail />} />
               <Route path="history" element={<SentEmails />} />
               <Route path="campaigns" element={<Campaigns />} />
+              <Route path="teams" element={<Teams />} />
               <Route path="billing" element={<Billing />} />
               <Route path="settings" element={<DashboardSettings />} />
             </Route>

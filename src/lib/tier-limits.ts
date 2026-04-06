@@ -8,11 +8,8 @@ export interface TierLimits {
   voiceNotes: boolean;
   aiMessages: boolean;
   scheduledSending: boolean;
-  fileAttachments: boolean;
   emailMarketing: boolean;
   campaignManagement: boolean;
-  customBranding: boolean;
-  apiAccess: boolean;
   price: number;
   label: string;
 }
@@ -26,11 +23,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: false,
-    fileAttachments: false,
     emailMarketing: false,
     campaignManagement: false,
-    customBranding: false,
-    apiAccess: false,
     price: 0,
     label: 'Free',
   },
@@ -42,11 +36,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
-    fileAttachments: true,
     emailMarketing: false,
     campaignManagement: false,
-    customBranding: false,
-    apiAccess: false,
     price: 13,
     label: 'Basic',
   },
@@ -58,11 +49,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
-    fileAttachments: false,
     emailMarketing: true,
     campaignManagement: true,
-    customBranding: false,
-    apiAccess: false,
     price: 22,
     label: 'Pro',
   },
@@ -74,11 +62,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     voiceNotes: true,
     aiMessages: false,
     scheduledSending: true,
-    fileAttachments: false,
     emailMarketing: true,
     campaignManagement: true,
-    customBranding: false,
-    apiAccess: false,
     price: 35,
     label: 'Business',
   },

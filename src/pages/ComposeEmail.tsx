@@ -504,52 +504,6 @@ export default function ComposeEmail() {
             </CardContent>
           </Card>
           )}
-          {/* Attachments Card - Basic tier only */}
-          {limits.fileAttachments && (
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="font-display text-lg flex items-center gap-2">
-                <Paperclip className="w-4 h-4" /> Attachments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="gap-2 w-full mb-3"
-              >
-                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-                {uploading ? 'Uploading...' : 'Attach Files, Images, or Videos'}
-              </Button>
-              <p className="text-xs text-muted-foreground mb-3">Max 10MB per file. Supports images, videos, PDFs, documents.</p>
-              {attachments.length > 0 && (
-                <div className="space-y-2">
-                  {attachments.map((file, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {getFileIcon(file.type)}
-                        <span className="truncate">{file.name}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeAttachment(i)}>
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          )}
 
           {/* Send Button */}
           <Button onClick={handleSend} variant="gradient" className="w-full" disabled={sending}>

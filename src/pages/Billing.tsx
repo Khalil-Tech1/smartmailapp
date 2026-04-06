@@ -9,15 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 
 const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
-const features: { label: string; key: keyof typeof TIER_LIMITS.free }[] = [
+const features: { label: string; key: keyof typeof TIER_LIMITS.free; labelOverride?: Record<string, string> }[] = [
   { label: 'Voice Notes', key: 'voiceNotes' },
-  { label: 'AI-Personalized Messages', key: 'aiMessages' },
   { label: 'Scheduled Sending', key: 'scheduledSending' },
-  { label: 'File Attachments', key: 'fileAttachments' },
   { label: 'Email Marketing Tools', key: 'emailMarketing' },
-  { label: 'Campaign Management', key: 'campaignManagement' },
-  { label: 'Custom Branding', key: 'customBranding' },
-  { label: 'API Access', key: 'apiAccess' },
+  { label: 'Campaign Management', key: 'campaignManagement', labelOverride: { business: 'Campaign Archiving' } },
 ];
 
 function formatLimit(val: number | null) {
@@ -127,14 +123,14 @@ export default function Billing() {
                   <div className="space-y-1.5">
                     {features.map(f => {
                       const has = limits[f.key];
+                      // For Pro: skip campaignManagement row, only show emailMarketing
+                      if (f.key === 'campaignManagement' && t === 'pro') return null;
+                      const displayLabel = f.labelOverride?.[t] || f.label;
+                      if (!has) return null;
                       return (
                         <div key={f.key} className="flex items-center gap-1.5 text-xs">
-                          {has ? (
-                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                          ) : (
-                            <X className="w-3.5 h-3.5 text-muted-foreground/30 shrink-0" />
-                          )}
-                          <span className={has ? '' : 'text-muted-foreground/50'}>{f.label}</span>
+                          <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                          <span>{displayLabel}</span>
                         </div>
                       );
                     })}

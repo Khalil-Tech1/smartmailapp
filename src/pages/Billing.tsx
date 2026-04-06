@@ -123,14 +123,14 @@ export default function Billing() {
                   <div className="space-y-1.5">
                     {features.map(f => {
                       const has = limits[f.key];
+                      // For Pro: skip campaignManagement row, only show emailMarketing
+                      if (f.key === 'campaignManagement' && t === 'pro') return null;
+                      const displayLabel = f.labelOverride?.[t] || f.label;
+                      if (!has) return null;
                       return (
                         <div key={f.key} className="flex items-center gap-1.5 text-xs">
-                          {has ? (
-                            <Check className="w-3.5 h-3.5 text-success shrink-0" />
-                          ) : (
-                            <X className="w-3.5 h-3.5 text-muted-foreground/30 shrink-0" />
-                          )}
-                          <span className={has ? '' : 'text-muted-foreground/50'}>{f.label}</span>
+                          <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                          <span>{displayLabel}</span>
                         </div>
                       );
                     })}

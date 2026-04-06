@@ -8,11 +8,8 @@ export interface TierLimits {
   voiceNotes: boolean;
   aiMessages: boolean;
   scheduledSending: boolean;
-  fileAttachments: boolean;
   emailMarketing: boolean;
   campaignManagement: boolean;
-  customBranding: boolean;
-  apiAccess: boolean;
   price: number;
   label: string;
 }

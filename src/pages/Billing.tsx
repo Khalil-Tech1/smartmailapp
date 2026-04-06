@@ -9,15 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 
 const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
-const features: { label: string; key: keyof typeof TIER_LIMITS.free }[] = [
+const features: { label: string; key: keyof typeof TIER_LIMITS.free; labelOverride?: Record<string, string> }[] = [
   { label: 'Voice Notes', key: 'voiceNotes' },
-  { label: 'AI-Personalized Messages', key: 'aiMessages' },
   { label: 'Scheduled Sending', key: 'scheduledSending' },
-  { label: 'File Attachments', key: 'fileAttachments' },
   { label: 'Email Marketing Tools', key: 'emailMarketing' },
-  { label: 'Campaign Management', key: 'campaignManagement' },
-  { label: 'Custom Branding', key: 'customBranding' },
-  { label: 'API Access', key: 'apiAccess' },
+  { label: 'Campaign Management', key: 'campaignManagement', labelOverride: { business: 'Campaign Archiving' } },
 ];
 
 function formatLimit(val: number | null) {

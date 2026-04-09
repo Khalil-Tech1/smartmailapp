@@ -14,6 +14,7 @@ const features: { label: string; key: keyof typeof TIER_LIMITS.free; labelOverri
   { label: 'Scheduled Sending', key: 'scheduledSending' },
   { label: 'Email Marketing Tools', key: 'emailMarketing' },
   { label: 'Campaign Management', key: 'campaignManagement', labelOverride: { business: 'Campaign Archiving' } },
+  { label: 'Ownership Transfer', key: 'transferOwnership' },
 ];
 
 function formatLimit(val: number | null) {
@@ -25,25 +26,19 @@ export default function Billing() {
   const { tier, hasUsedTrial, isOnTrial, trialEnd, startTrial } = useAuth();
   const { toast } = useToast();
 
-  async function handleUpgrade(targetTier: SubscriptionTier) {
-    if (targetTier === 'free') return;
-
-    if (!hasUsedTrial) {
-      const success = await startTrial(targetTier);
-      if (success) {
-        toast({
-          title: '🎉 Free trial started!',
-          description: `Enjoy your ${TIER_LIMITS[targetTier].label} plan free for 2 weeks!`,
-        });
-      } else {
-        toast({ title: 'Error', description: 'Could not start trial. Please try again.', variant: 'destructive' });
-      }
+  async function handleSwitch(targetTier: SubscriptionTier) {
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update({
+      subscription_tier: targetTier,
+    }).eq('user_id', user.id);
+    if (error) {
+      toast({ title: 'Error', description: 'Could not switch plan. Please try again.', variant: 'destructive' });
       return;
     }
-
+    await refreshProfile();
     toast({
-      title: 'PayPal Integration Coming Soon',
-      description: 'PayPal subscription billing will be integrated shortly. Stay tuned!',
+      title: '✅ Plan switched!',
+      description: `You're now on the ${TIER_LIMITS[targetTier].label} plan.`,
     });
   }
 

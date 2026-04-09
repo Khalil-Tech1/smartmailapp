@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
 import { Check, Lock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
+import { useToast } from '@/hooks/use-toast';
 
 const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
@@ -22,7 +24,24 @@ function formatLimit(val: number | null) {
 }
 
 export default function Billing() {
-  const { tier, isOnTrial } = useAuth();
+  const { user, tier, isOnTrial, refreshProfile } = useAuth();
+  const { toast } = useToast();
+
+  async function handleUpgrade(targetTier: SubscriptionTier) {
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update({
+      subscription_tier: targetTier,
+    }).eq('user_id', user.id);
+    if (error) {
+      toast({ title: 'Error', description: 'Could not switch plan. Please try again.', variant: 'destructive' });
+      return;
+    }
+    await refreshProfile();
+    toast({
+      title: '✅ Plan updated!',
+      description: `You're now on the ${TIER_LIMITS[targetTier].label} plan.`,
+    });
+  }
 
   return (
     <div>
@@ -114,8 +133,9 @@ export default function Billing() {
                       className="w-full"
                       size="sm"
                       disabled={isCurrent}
+                      onClick={() => handleUpgrade(t)}
                     >
-                      {isCurrent ? 'Current Plan' : limits.price === 0 ? 'Get Started' : 'Upgrade'}
+                      {isCurrent ? 'Current Plan' : limits.price === 0 ? 'Downgrade' : 'Upgrade'}
                     </Button>
                   )}
                 </CardContent>

@@ -174,16 +174,17 @@ export default function Index() {
                         {limits.campaignManagement && t !== 'pro' && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Campaign archiving</li>}
                         {limits.transferOwnership && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Ownership transfer</li>}
                       </ul>
-                      {limits.price > 0 && (
-                        <p className="text-xs text-primary font-medium mb-3 flex items-center gap-1">
-                          <Gift className="w-3 h-3" /> 14-day free trial included
-                        </p>
-                      )}
-                      <Link to="/auth">
-                        <Button variant={isPopular ? 'gradient' : 'outline'} className="w-full" size="sm">
-                          {limits.price === 0 ? 'Get Started' : 'Start Free Trial'}
+                      {t === 'business' ? (
+                        <Button variant="outline" className="w-full" size="sm" disabled>
+                          Coming Soon
                         </Button>
-                      </Link>
+                      ) : (
+                        <Link to="/auth">
+                          <Button variant={isPopular ? 'gradient' : 'outline'} className="w-full" size="sm">
+                            {limits.price === 0 ? 'Get Started' : 'Get Started'}
+                          </Button>
+                        </Link>
+                      )}
                     </CardContent>
                   </Card>
                 </motion.div>

@@ -10,7 +10,6 @@ export interface TierLimits {
   scheduledSending: boolean;
   emailMarketing: boolean;
   campaignManagement: boolean;
-  transferOwnership: boolean;
   price: number;
   label: string;
 }
@@ -26,7 +25,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     scheduledSending: false,
     emailMarketing: false,
     campaignManagement: false,
-    transferOwnership: false,
     price: 0,
     label: 'Free',
   },
@@ -40,7 +38,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     scheduledSending: true,
     emailMarketing: false,
     campaignManagement: false,
-    transferOwnership: false,
     price: 13,
     label: 'Basic',
   },
@@ -54,7 +51,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     scheduledSending: true,
     emailMarketing: true,
     campaignManagement: true,
-    transferOwnership: false,
     price: 22,
     label: 'Pro',
   },
@@ -68,7 +64,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     scheduledSending: true,
     emailMarketing: true,
     campaignManagement: true,
-    transferOwnership: true,
     price: 35,
     label: 'Business',
   },

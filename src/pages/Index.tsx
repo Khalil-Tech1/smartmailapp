@@ -53,7 +53,7 @@ export default function Index() {
             transition={{ duration: 0.7 }}
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-full px-4 py-1.5 mb-6">
-              <Gift className="w-3.5 h-3.5" /> Start with a 2-week free trial on any paid plan
+              <Zap className="w-3.5 h-3.5" /> Group emails, simplified
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold font-display leading-tight mb-6">
               Group emails,{' '}
@@ -113,10 +113,6 @@ export default function Index() {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">Simple, transparent pricing</h2>
             <p className="text-muted-foreground text-lg">Start free. Upgrade when you need more.</p>
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-full px-4 py-1.5 mt-4">
-              <Gift className="w-4 h-4" />
-              <span>All paid plans include a <strong>2-week free trial</strong> for new users</span>
-            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {tiers.map((t, i) => {

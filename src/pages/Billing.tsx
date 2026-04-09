@@ -1,12 +1,10 @@
 import { motion } from 'framer-motion';
-import { Check, Gift } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Check, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
-import { useToast } from '@/hooks/use-toast';
 
 const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 
@@ -24,36 +22,20 @@ function formatLimit(val: number | null) {
 }
 
 export default function Billing() {
-  const { user, tier, hasUsedTrial, isOnTrial, trialEnd, refreshProfile } = useAuth();
-  const { toast } = useToast();
-
-  async function handleSwitch(targetTier: SubscriptionTier) {
-    if (!user) return;
-    const { error } = await supabase.from('profiles').update({
-      subscription_tier: targetTier,
-    }).eq('user_id', user.id);
-    if (error) {
-      toast({ title: 'Error', description: 'Could not switch plan. Please try again.', variant: 'destructive' });
-      return;
-    }
-    await refreshProfile();
-    toast({
-      title: '✅ Plan switched!',
-      description: `You're now on the ${TIER_LIMITS[targetTier].label} plan.`,
-    });
-  }
+  const { tier, isOnTrial } = useAuth();
 
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold font-display">Billing & Plans</h1>
-        <p className="text-muted-foreground mt-1">Switch between plans freely.</p>
+        <p className="text-muted-foreground mt-1">Choose the plan that fits your needs.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {tiers.map((t, i) => {
           const limits = TIER_LIMITS[t];
           const isCurrent = t === tier;
+          const isComingSoon = t === 'business';
 
           return (
             <motion.div
@@ -62,7 +44,7 @@ export default function Billing() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className={`relative overflow-hidden border ${isCurrent ? 'border-primary shadow-glow' : 'border-border/50'}`}>
+              <Card className={`relative overflow-hidden border ${isCurrent ? 'border-primary shadow-glow' : 'border-border/50'} ${isComingSoon ? 'opacity-75' : ''}`}>
                 {isCurrent && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />
                 )}
@@ -72,6 +54,11 @@ export default function Billing() {
                       {limits.label}
                     </CardTitle>
                     {isCurrent && <Badge className="text-xs">{isOnTrial ? 'Trial' : 'Current'}</Badge>}
+                    {isComingSoon && !isCurrent && (
+                      <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Soon
+                      </Badge>
+                    )}
                   </div>
                   <div className="mt-1">
                     <span className="text-2xl font-bold font-display">
@@ -105,7 +92,6 @@ export default function Billing() {
                   <div className="space-y-1.5">
                     {features.map(f => {
                       const has = limits[f.key];
-                      // For Pro: skip campaignManagement row, only show emailMarketing
                       if (f.key === 'campaignManagement' && t === 'pro') return null;
                       const displayLabel = f.labelOverride?.[t] || f.label;
                       if (!has) return null;
@@ -118,15 +104,20 @@ export default function Billing() {
                     })}
                   </div>
 
-                  <Button
-                    variant={isCurrent ? 'outline' : 'gradient'}
-                    className="w-full"
-                    size="sm"
-                    disabled={isCurrent}
-                    onClick={() => handleSwitch(t)}
-                  >
-                    {isCurrent ? 'Current Plan' : 'Switch'}
-                  </Button>
+                  {isComingSoon ? (
+                    <Button variant="outline" className="w-full" size="sm" disabled>
+                      Coming Soon
+                    </Button>
+                  ) : (
+                    <Button
+                      variant={isCurrent ? 'outline' : 'gradient'}
+                      className="w-full"
+                      size="sm"
+                      disabled={isCurrent}
+                    >
+                      {isCurrent ? 'Current Plan' : limits.price === 0 ? 'Get Started' : 'Upgrade'}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Check, X, Gift, Crown } from 'lucide-react';
+import { Check, Gift } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +24,7 @@ function formatLimit(val: number | null) {
 }
 
 export default function Billing() {
-  const { tier, hasUsedTrial, isOnTrial, trialEnd, startTrial } = useAuth();
+  const { user, tier, hasUsedTrial, isOnTrial, trialEnd, refreshProfile } = useAuth();
   const { toast } = useToast();
 
   async function handleSwitch(targetTier: SubscriptionTier) {
@@ -135,16 +136,10 @@ export default function Billing() {
                     variant={isCurrent ? 'outline' : 'gradient'}
                     className="w-full"
                     size="sm"
-                    disabled={isCurrent || t === 'free'}
-                    onClick={() => handleUpgrade(t)}
+                    disabled={isCurrent}
+                    onClick={() => handleSwitch(t)}
                   >
-                    {isCurrent
-                      ? (isOnTrial ? 'On Trial' : 'Current Plan')
-                      : t === 'free'
-                        ? 'Free'
-                        : !hasUsedTrial
-                          ? 'Start Free Trial'
-                          : 'Upgrade'}
+                    {isCurrent ? 'Current Plan' : 'Switch'}
                   </Button>
                 </CardContent>
               </Card>

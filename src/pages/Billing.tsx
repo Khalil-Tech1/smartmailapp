@@ -43,25 +43,11 @@ export default function Billing() {
     });
   }
 
-  const trialDaysLeft = trialEnd ? Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0;
-
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold font-display">Billing & Plans</h1>
-        <p className="text-muted-foreground mt-1">Manage your subscription and upgrade your plan.</p>
-        {isOnTrial && (
-          <div className="mt-3 flex items-center gap-2 text-sm bg-primary/10 text-primary rounded-lg px-4 py-2 w-fit">
-            <Gift className="w-4 h-4" />
-            <span>Free trial active — <strong>{trialDaysLeft} days</strong> remaining</span>
-          </div>
-        )}
-        {!hasUsedTrial && tier === 'free' && (
-          <div className="mt-3 flex items-center gap-2 text-sm bg-accent/50 text-accent-foreground rounded-lg px-4 py-2 w-fit">
-            <Gift className="w-4 h-4" />
-            <span>You're eligible for a <strong>2-week free trial</strong> on any paid plan!</span>
-          </div>
-        )}
+        <p className="text-muted-foreground mt-1">Switch between plans freely.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

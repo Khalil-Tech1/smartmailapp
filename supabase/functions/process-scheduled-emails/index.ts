@@ -14,6 +14,9 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')!
+    const resendFromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev'
+    
     const supabase = createClient(supabaseUrl, serviceKey)
 
     // Find scheduled emails that are due
@@ -43,16 +46,42 @@ serve(async (req) => {
         if (members) recipients = members
       }
 
-      // TODO: When email provider (e.g. Resend) is configured, actually send here
-      // For now, mark as sent
-      for (const r of recipients) {
-        console.log(`Sending scheduled email to: ${r.email}`)
+      // Send emails via Resend API
+      let sentCount = 0
+      const errors: string[] = []
+
+      for (const recipient of recipients) {
+        try {
+          const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: resendFromEmail,
+              to: recipient.email,
+              subject: email.subject,
+              html: email.body,
+              reply_to: resendFromEmail,
+            }),
+          })
+
+          if (!response.ok) {
+            const errorData = await response.text()
+            throw new Error(`Resend API error: ${response.status} - ${errorData}`)
+          }
+
+          sentCount++
+        } catch (e: any) {
+          errors.push(`${recipient.email}: ${e.message}`)
+        }
       }
 
       const { error: updateError } = await supabase
         .from('sent_emails')
         .update({
-          status: 'sent',
+          status: errors.length === 0 ? 'sent' : 'partial',
           sent_at: new Date().toISOString(),
         })
         .eq('id', email.id)
@@ -76,16 +105,45 @@ serve(async (req) => {
             .eq('group_id', campaign.group_id)
 
           if (members) {
-            for (const r of members) {
-              console.log(`Sending scheduled campaign to: ${r.email}`)
+            // Send campaign emails via Resend API
+            let sentCount = 0
+            const errors: string[] = []
+
+            for (const member of members) {
+              try {
+                const response = await fetch('https://api.resend.com/emails', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${resendApiKey}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    from: resendFromEmail,
+                    to: member.email,
+                    subject: campaign.subject,
+                    html: campaign.body,
+                    reply_to: resendFromEmail,
+                  }),
+                })
+
+                if (!response.ok) {
+                  const errorData = await response.text()
+                  throw new Error(`Resend API error: ${response.status} - ${errorData}`)
+                }
+
+                sentCount++
+              } catch (e: any) {
+                errors.push(`${member.email}: ${e.message}`)
+              }
             }
+
             await supabase
               .from('email_campaigns')
               .update({
                 status: 'sent',
                 sent_at: new Date().toISOString(),
                 sent_count: members.length,
-                delivered_count: members.length,
+                delivered_count: sentCount,
               })
               .eq('id', campaign.id)
             processed++

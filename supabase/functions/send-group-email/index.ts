@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import nodemailer from "npm:nodemailer@6.9.8"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,9 +15,19 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const resendApiKey = Deno.env.get('RESEND_API_KEY')!
+
+    // Email service configuration - SMTP takes priority
+    const useSmtp = Deno.env.get('SMTP_ENABLED') === 'true'
+    const smtpHost = Deno.env.get('SMTP_HOST')
+    const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '587')
+    const smtpUser = Deno.env.get('SMTP_USER')
+    const smtpPassword = Deno.env.get('SMTP_PASSWORD')
+    const smtpFromEmail = Deno.env.get('SMTP_FROM_EMAIL') || smtpUser
+
+    // Resend fallback
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
     const resendFromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev'
-    
+
     const supabase = createClient(supabaseUrl, serviceKey)
 
     // Verify JWT
@@ -90,36 +101,69 @@ serve(async (req) => {
       </html>
     `
 
-    // Send emails via Resend API
+    // Send emails via SMTP or Resend
     let sentCount = 0
     const errors: string[] = []
 
-    for (const recipient of recipients) {
-      try {
-        const response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: resendFromEmail,
+    if (useSmtp && smtpHost && smtpUser && smtpPassword) {
+      // Send via SMTP
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPassword,
+        },
+      })
+
+      for (const recipient of recipients) {
+        try {
+          await transporter.sendMail({
+            from: smtpFromEmail,
             to: recipient.email,
             subject: subject,
             html: emailHtml,
-            reply_to: resendFromEmail,
-          }),
-        })
-
-        if (!response.ok) {
-          const errorData = await response.text()
-          throw new Error(`Resend API error: ${response.status} - ${errorData}`)
+            replyTo: smtpFromEmail,
+          })
+          sentCount++
+        } catch (e: any) {
+          errors.push(`${recipient.email}: ${e.message}`)
         }
-
-        sentCount++
-      } catch (e: any) {
-        errors.push(`${recipient.email}: ${e.message}`)
       }
+
+      await transporter.close()
+    } else if (resendApiKey) {
+      // Fallback to Resend API
+      for (const recipient of recipients) {
+        try {
+          const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: resendFromEmail,
+              to: recipient.email,
+              subject: subject,
+              html: emailHtml,
+              reply_to: resendFromEmail,
+            }),
+          })
+
+          if (!response.ok) {
+            const errorData = await response.text()
+            throw new Error(`Resend API error: ${response.status} - ${errorData}`)
+          }
+
+          sentCount++
+        } catch (e: any) {
+          errors.push(`${recipient.email}: ${e.message}`)
+        }
+      }
+    } else {
+      throw new Error('No email service configured. Configure SMTP or Resend API.')
     }
 
     // Record the send

@@ -436,12 +436,6 @@ export default function ComposeEmail() {
                   onChange={e => setBody(e.target.value)}
                   className="min-h-[200px]"
                 />
-                {!limits.aiMessages && (
-                  <p className="text-xs text-muted-foreground">
-                    <Sparkles className="w-3 h-3 inline mr-1" />
-                    Upgrade to Basic or higher for AI-personalized messages
-                  </p>
-                )}
               </div>
             </CardContent>
           </Card>

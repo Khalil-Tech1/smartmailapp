@@ -236,14 +236,21 @@ export default function MailGroups() {
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => { e.stopPropagation(); deleteGroup(group.id); }}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <ConfirmDialog
+                          title="Delete this group?"
+                          description="The group and all its members will be permanently removed. This cannot be undone."
+                          onConfirm={() => deleteGroup(group.id)}
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
                       </div>
                     )}
                   </CardContent>

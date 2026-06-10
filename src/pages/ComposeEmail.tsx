@@ -279,85 +279,18 @@ export default function ComposeEmail() {
         ? `${body.trim()}\n\n🎙️ Voice Note:\n${voiceTranscript.trim()}`
         : body.trim();
 
-      const attachmentsHtml = attachments.length > 0
-        ? `<div style="margin-top:24px;padding:16px;background:#f9fafb;border-radius:8px;">
-            <p style="margin:0 0 12px;font-weight:600;color:#374151;font-size:13px;">📎 Attachments</p>
-            ${attachments.map(a => {
-              if (a.type?.startsWith('image/')) return `<div style="margin-bottom:12px;"><img src="${a.url}" alt="${a.name}" style="max-width:100%;border-radius:8px;max-height:300px;" /><p style="margin:4px 0 0;font-size:12px;color:#6b7280;">${a.name}</p></div>`;
-              return `<div style="margin-bottom:8px;"><a href="${a.url}" style="display:inline-flex;padding:8px 14px;background:#e5e7eb;color:#1f2937;text-decoration:none;border-radius:6px;font-size:12px;">📄 ${a.name}</a></div>`;
-            }).join('')}
-          </div>`
-        : '';
-
-      const emailHtml = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#fff;">
-        <div style="padding:30px;border-radius:12px;border:1px solid #e5e7eb;">
-          <h2 style="color:#1a1a2e;margin:0 0 20px;font-size:20px;">${subject.trim()}</h2>
-          <div style="color:#4a4a5a;line-height:1.7;white-space:pre-wrap;font-size:15px;">${fullBody}</div>
-          ${attachmentsHtml}
-        </div>
-        <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:24px;">Sent via SmartMail</p>
-      </body></html>`;
-
-      const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
-      if (!resendApiKey) throw new Error('Missing VITE_RESEND_API_KEY environment variable');
-
-      if (scheduledAt) {
-        // Save scheduled email to database for later processing
-        const { error: insertError } = await supabase.from('sent_emails').insert({
-          user_id: user.id,
-          group_id: selectedGroupId,
+      const { data, error } = await supabase.functions.invoke('send-group-email', {
+        body: {
+          recipients: selectedRecipients,
           subject: subject.trim(),
           body: fullBody,
-          recipient_count: selectedRecipients.length,
-          status: 'scheduled',
-          scheduled_at: scheduledAt,
-          sent_at: null,
-        });
-        if (insertError) throw insertError;
-      } else {
-        // Send directly via Resend API
-        let sentCount = 0;
-        const errors: string[] = [];
-        for (const recipient of selectedRecipients) {
-          try {
-            const response = await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${resendApiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                from: 'SmartMail <onboarding@resend.dev>',
-                to: recipient.email,
-                subject: subject.trim(),
-                html: emailHtml,
-              }),
-            });
-            if (!response.ok) {
-              const errText = await response.text();
-              throw new Error(`${response.status}: ${errText}`);
-            }
-            sentCount++;
-          } catch (e: any) {
-            errors.push(`${recipient.email}: ${e.message}`);
-          }
-        }
+          groupId: selectedGroupId,
+          scheduledAt,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-        // Log the send
-        await supabase.from('sent_emails').insert({
-          user_id: user.id,
-          group_id: selectedGroupId,
-          subject: subject.trim(),
-          body: fullBody,
-          recipient_count: selectedRecipients.length,
-          status: errors.length === 0 ? 'sent' : 'partial',
-          sent_at: new Date().toISOString(),
-        });
-
-        if (errors.length > 0 && sentCount === 0) {
-          throw new Error(errors[0]);
-        }
-      }
 
       const statusMsg = scheduledAt
         ? `Scheduled for ${new Date(scheduledAt).toLocaleString()}`

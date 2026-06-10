@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TIER_LIMITS } from '@/lib/tier-limits';
 import { UsersRound, UserPlus, Loader2, Trash2, Crown } from 'lucide-react';
 import TransferOwnership from '@/components/teams/TransferOwnership';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function Teams() {
   const { user, tier } = useAuth();

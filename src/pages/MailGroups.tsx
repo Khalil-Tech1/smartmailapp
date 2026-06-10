@@ -341,9 +341,17 @@ export default function MailGroups() {
                             <Button variant="ghost" size="icon" onClick={() => { setEditingMemberId(member.id); setEditingMemberName(member.name || ''); }} className="text-muted-foreground hover:text-primary">
                               <Pencil className="w-3 h-3" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => removeMember(member.id)} className="text-muted-foreground hover:text-destructive">
-                              <X className="w-4 h-4" />
-                            </Button>
+                            <ConfirmDialog
+                              title="Remove this member?"
+                              description={`${member.name || member.email} will be removed from this group.`}
+                              confirmLabel="Remove"
+                              onConfirm={() => removeMember(member.id)}
+                              trigger={
+                                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              }
+                            />
                           </div>
                         )}
                       </div>

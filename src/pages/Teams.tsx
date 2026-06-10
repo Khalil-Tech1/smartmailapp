@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TIER_LIMITS } from '@/lib/tier-limits';
 import { UsersRound, UserPlus, Loader2, Trash2, Crown } from 'lucide-react';
 import TransferOwnership from '@/components/teams/TransferOwnership';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function Teams() {
   const { user, tier } = useAuth();
@@ -257,9 +258,17 @@ export default function Teams() {
                       </div>
                     </div>
                     {isOwner && (
-                      <Button variant="ghost" size="sm" onClick={() => removeMember(member.id)} className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <ConfirmDialog
+                        title="Remove team member?"
+                        description={`${member.email || 'This member'} will lose access to the team.`}
+                        confirmLabel="Remove"
+                        onConfirm={() => removeMember(member.id)}
+                        trigger={
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        }
+                      />
                     )}
                   </div>
                 ))

@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TIER_LIMITS } from '@/lib/tier-limits';
 import { useToast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 type MailGroup = Tables<'mail_groups'>;
 type GroupMember = Tables<'group_members'>;
@@ -235,14 +236,21 @@ export default function MailGroups() {
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => { e.stopPropagation(); deleteGroup(group.id); }}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <ConfirmDialog
+                          title="Delete this group?"
+                          description="The group and all its members will be permanently removed. This cannot be undone."
+                          onConfirm={() => deleteGroup(group.id)}
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
                       </div>
                     )}
                   </CardContent>
@@ -333,9 +341,17 @@ export default function MailGroups() {
                             <Button variant="ghost" size="icon" onClick={() => { setEditingMemberId(member.id); setEditingMemberName(member.name || ''); }} className="text-muted-foreground hover:text-primary">
                               <Pencil className="w-3 h-3" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => removeMember(member.id)} className="text-muted-foreground hover:text-destructive">
-                              <X className="w-4 h-4" />
-                            </Button>
+                            <ConfirmDialog
+                              title="Remove this member?"
+                              description={`${member.name || member.email} will be removed from this group.`}
+                              confirmLabel="Remove"
+                              onConfirm={() => removeMember(member.id)}
+                              trigger={
+                                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              }
+                            />
                           </div>
                         )}
                       </div>

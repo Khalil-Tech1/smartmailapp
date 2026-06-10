@@ -258,9 +258,17 @@ export default function Teams() {
                       </div>
                     </div>
                     {isOwner && (
-                      <Button variant="ghost" size="sm" onClick={() => removeMember(member.id)} className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <ConfirmDialog
+                        title="Remove team member?"
+                        description={`${member.email || 'This member'} will lose access to the team.`}
+                        confirmLabel="Remove"
+                        onConfirm={() => removeMember(member.id)}
+                        trigger={
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        }
+                      />
                     )}
                   </div>
                 ))

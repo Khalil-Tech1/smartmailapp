@@ -15,7 +15,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const resendApiKey = Deno.env.get('RESEND_API_KEY')!
-    const resendFromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev'
+    const senderAddress = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev'
+    const resendFromEmail = `SmartMail <${senderAddress}>`
+    const replyToAddress = senderAddress
     
     const supabase = createClient(supabaseUrl, serviceKey)
 
@@ -63,7 +65,7 @@ serve(async (req) => {
               to: recipient.email,
               subject: email.subject,
               html: email.body,
-              reply_to: resendFromEmail,
+              reply_to: replyToAddress,
             }),
           })
 
@@ -122,7 +124,7 @@ serve(async (req) => {
                     to: member.email,
                     subject: campaign.subject,
                     html: campaign.body,
-                    reply_to: resendFromEmail,
+                    reply_to: replyToAddress,
                   }),
                 })
 

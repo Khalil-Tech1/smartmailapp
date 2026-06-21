@@ -110,14 +110,43 @@ export default function Teams() {
         toast({ title: 'Team limit reached', description: `Your plan allows up to ${maxMembers} team members.`, variant: 'destructive' });
         return;
       }
+      const email = inviteEmail.trim();
       const { error } = await supabase.from('team_invites').insert({
         team_id: team.id,
-        email: inviteEmail.trim(),
+        email,
         role: inviteRole as any,
         invited_by: user.id,
       });
       if (error) throw error;
-      toast({ title: 'Invite sent!' });
+
+      const inviterName = user.user_metadata?.full_name || user.email || 'A teammate';
+      const acceptUrl = `${window.location.origin}/auth?invite_email=${encodeURIComponent(email)}&team=${encodeURIComponent(team.name)}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+          <h2 style="color:#111;">You've been invited to join ${team.name}</h2>
+          <p>${inviterName} invited you to join their team on SmartMail as <strong>${inviteRole}</strong>.</p>
+          <p style="margin: 24px 0;">
+            <a href="${acceptUrl}" style="background:#3B82F6;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;">Accept invitation</a>
+          </p>
+          <p style="color:#666;font-size:12px;">If you weren't expecting this, you can ignore this email.</p>
+        </div>`;
+
+      const { data: sendData, error: sendErr } = await supabase.functions.invoke('send-group-email', {
+        body: {
+          recipients: [email],
+          subject: `${inviterName} invited you to join ${team.name} on SmartMail`,
+          body: html,
+        },
+      });
+      if (sendErr) throw sendErr;
+      if (sendData?.status === 'failed') {
+        throw new Error(sendData?.errors?.[0] || 'Email failed to send');
+      }
+
+      toast({
+        title: 'Invite sent!',
+        description: `Email dispatched to ${email}. Note: until you verify a sender domain in Resend, delivery only works to your own Resend account email.`,
+      });
       setInviteEmail('');
       setInviteOpen(false);
     } catch (err: any) {

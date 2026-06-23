@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Loader2, AlertTriangle, Users } from 'lucide-react';
 import TransferOwnership from '@/components/teams/TransferOwnership';
+import EmailIdentitySection from '@/components/EmailIdentitySection';
 
 export default function DashboardSettings() {
   const { user, tier, signOut } = useAuth();

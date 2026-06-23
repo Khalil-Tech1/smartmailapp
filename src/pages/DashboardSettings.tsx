@@ -93,8 +93,10 @@ export default function DashboardSettings() {
           <Button variant="gradient" onClick={updateProfile}>Save Changes</Button>
         </CardContent>
       </Card>
+      <EmailIdentitySection />
 
       {/* Transfer Ownership - Business tier only */}
+
       {tier === 'business' && team && (
         <Card className="max-w-lg border-border/50 mb-6">
           <CardHeader>

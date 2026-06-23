@@ -6,7 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const FROM = 'SmartMail <hello@smartmail.ink>'
+const SENDER_EMAIL = 'hello@smartmail.ink'
+const DEFAULT_FROM_NAME = 'SmartMail'
+
+function buildFrom(senderName: string | null | undefined, tier: string | null | undefined) {
+  const allowCustom = tier === 'pro' || tier === 'business'
+  const name = (allowCustom && senderName && senderName.trim()) ? senderName.trim() : DEFAULT_FROM_NAME
+  // Strip any chars that would break the From header
+  const safe = name.replace(/[<>"]/g, '').slice(0, 80)
+  return `${safe} <${SENDER_EMAIL}>`
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
@@ -27,27 +36,41 @@ serve(async (req) => {
     )
     if (authError || !user) throw new Error('Unauthorized')
 
-    const { recipients: rawRecipients, subject, body, groupId, scheduledAt, voiceNoteTranscript } = await req.json()
+    const { recipients: rawRecipients, subject, body, groupId, scheduledAt, voiceNoteTranscript, includeSignature } = await req.json()
     if (!rawRecipients?.length || !subject || !body) {
       throw new Error('Missing required fields: recipients, subject, body')
     }
-    // Normalize: accept either ["a@b.com", ...] or [{ email: "a@b.com" }, ...]
     const recipients: { email: string }[] = rawRecipients.map((r: any) =>
       typeof r === 'string' ? { email: r } : r
     ).filter((r: any) => r?.email)
     if (!recipients.length) throw new Error('No valid recipient emails provided')
 
+    // Load sender identity from profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('sender_name, email_signature, subscription_tier')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const from = buildFrom(profile?.sender_name, profile?.subscription_tier)
+    const tier = profile?.subscription_tier
+    const allowSignature = tier === 'basic' || tier === 'pro' || tier === 'business'
+    const signature = (includeSignature !== false && allowSignature && profile?.email_signature?.trim())
+      ? profile.email_signature.trim()
+      : null
+
     const fullBody = voiceNoteTranscript
       ? `${body}\n\n🎙️ Voice Note:\n${voiceNoteTranscript}`
       : body
 
-    // Schedule path: just save it, cron will process
+    // Schedule path: just save it, cron will process. Pre-merge signature into body so it survives the queue.
     if (scheduledAt) {
+      const bodyWithSig = signature ? `${fullBody}\n\n--\n${signature}` : fullBody
       const { error } = await supabase.from('sent_emails').insert({
         user_id: user.id,
         group_id: groupId || null,
         subject,
-        body: fullBody,
+        body: bodyWithSig,
         recipient_count: recipients.length,
         status: 'scheduled',
         scheduled_at: scheduledAt,
@@ -59,10 +82,16 @@ serve(async (req) => {
       })
     }
 
+    const signatureBlock = signature
+      ? `<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 12px;" />
+         <div style="color:#6b7280;font-size:13px;line-height:1.6;">${signature}</div>`
+      : ''
+
     const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#fff;">
       <div style="padding:30px;border-radius:12px;border:1px solid #e5e7eb;">
         <h2 style="color:#1a1a2e;margin:0 0 20px;font-size:20px;">${subject}</h2>
         <div style="color:#4a4a5a;line-height:1.7;white-space:pre-wrap;font-size:15px;">${fullBody}</div>
+        ${signatureBlock}
       </div>
       <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:24px;">Sent via SmartMail</p>
     </body></html>`
@@ -77,7 +106,7 @@ serve(async (req) => {
             'Authorization': `Bearer ${resendApiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ from: FROM, to: [r.email], subject, html }),
+          body: JSON.stringify({ from, to: [r.email], subject, html }),
         })
         if (!resp.ok) throw new Error(`${resp.status}: ${await resp.text()}`)
         sentCount++

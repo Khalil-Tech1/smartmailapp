@@ -54,8 +54,17 @@ export default function ComposeEmail() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Email signature toggle (default ON)
+  const [includeSignature, setIncludeSignature] = useState(true);
+  const [hasSignature, setHasSignature] = useState(false);
+  const canUseSignature = tier === 'basic' || tier === 'pro' || tier === 'business';
+
   useEffect(() => {
-    if (user) loadGroups();
+    if (user) {
+      loadGroups();
+      supabase.from('profiles').select('email_signature').eq('user_id', user.id).maybeSingle()
+        .then(({ data }) => setHasSignature(!!data?.email_signature?.trim()));
+    }
   }, [user]);
 
   useEffect(() => {
@@ -286,6 +295,7 @@ export default function ComposeEmail() {
           body: fullBody,
           groupId: selectedGroupId,
           scheduledAt,
+          includeSignature: canUseSignature && includeSignature,
         },
       });
       if (error) throw error;
@@ -501,6 +511,27 @@ export default function ComposeEmail() {
             </CardContent>
           </Card>
           )}
+
+          {/* Signature toggle */}
+          {canUseSignature && hasSignature && (
+            <div className="flex items-center justify-between rounded-lg border border-border/50 bg-card px-4 py-3">
+              <div>
+                <p className="text-sm font-medium">Include email signature</p>
+                <p className="text-xs text-muted-foreground">Appended automatically to this email</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={includeSignature}
+                  onChange={e => setIncludeSignature(e.target.checked)}
+                />
+                <div className="w-10 h-5 bg-muted rounded-full peer-checked:bg-primary transition-colors relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-background after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5" />
+              </label>
+            </div>
+          )}
+
+
 
           {/* Send Button */}
           <Button onClick={handleSend} variant="gradient" className="w-full" disabled={sending}>

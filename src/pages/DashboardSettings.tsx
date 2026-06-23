@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Loader2, AlertTriangle, Users } from 'lucide-react';
 import TransferOwnership from '@/components/teams/TransferOwnership';
+import EmailIdentitySection from '@/components/EmailIdentitySection';
 
 export default function DashboardSettings() {
   const { user, tier, signOut } = useAuth();
@@ -92,8 +93,10 @@ export default function DashboardSettings() {
           <Button variant="gradient" onClick={updateProfile}>Save Changes</Button>
         </CardContent>
       </Card>
+      <EmailIdentitySection />
 
       {/* Transfer Ownership - Business tier only */}
+
       {tier === 'business' && team && (
         <Card className="max-w-lg border-border/50 mb-6">
           <CardHeader>

@@ -16,10 +16,23 @@ serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const resendApiKey = Deno.env.get('RESEND_API_KEY')!
     const senderAddress = Deno.env.get('RESEND_FROM_EMAIL') || 'hello@smartmail.ink'
-    const resendFromEmail = `SmartMail <${senderAddress}>`
     const replyToAddress = senderAddress
-    
+    const DEFAULT_FROM_NAME = 'SmartMail'
+
     const supabase = createClient(supabaseUrl, serviceKey)
+
+    async function getFromFor(userId: string | null | undefined): Promise<string> {
+      if (!userId) return `${DEFAULT_FROM_NAME} <${senderAddress}>`
+      const { data } = await supabase
+        .from('profiles')
+        .select('sender_name, subscription_tier')
+        .eq('user_id', userId)
+        .maybeSingle()
+      const allowCustom = data?.subscription_tier === 'pro' || data?.subscription_tier === 'business'
+      const name = (allowCustom && data?.sender_name?.trim()) ? data.sender_name.trim() : DEFAULT_FROM_NAME
+      const safe = name.replace(/[<>"]/g, '').slice(0, 80)
+      return `${safe} <${senderAddress}>`
+    }
 
     // Find scheduled emails that are due
     const now = new Date().toISOString()
@@ -61,7 +74,7 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: resendFromEmail,
+              from: await getFromFor(email.user_id),
               to: recipient.email,
               subject: email.subject,
               html: email.body,
@@ -120,7 +133,7 @@ serve(async (req) => {
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({
-                    from: resendFromEmail,
+                    from: await getFromFor(campaign.user_id),
                     to: member.email,
                     subject: campaign.subject,
                     html: campaign.body,

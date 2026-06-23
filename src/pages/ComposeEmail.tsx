@@ -54,6 +54,11 @@ export default function ComposeEmail() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Email signature toggle (default ON)
+  const [includeSignature, setIncludeSignature] = useState(true);
+  const [hasSignature, setHasSignature] = useState(false);
+  const canUseSignature = tier === 'basic' || tier === 'pro' || tier === 'business';
+
   useEffect(() => {
     if (user) loadGroups();
   }, [user]);

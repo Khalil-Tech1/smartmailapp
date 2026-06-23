@@ -133,7 +133,7 @@ serve(async (req) => {
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({
-                    from: await getFromFor(email.user_id),
+                    from: await getFromFor(campaign.user_id),
                     to: member.email,
                     subject: campaign.subject,
                     html: campaign.body,

@@ -74,7 +74,7 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: resendFromEmail,
+              from: await getFromFor(email.user_id),
               to: recipient.email,
               subject: email.subject,
               html: email.body,
@@ -133,7 +133,7 @@ serve(async (req) => {
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({
-                    from: resendFromEmail,
+                    from: await getFromFor(email.user_id),
                     to: member.email,
                     subject: campaign.subject,
                     html: campaign.body,

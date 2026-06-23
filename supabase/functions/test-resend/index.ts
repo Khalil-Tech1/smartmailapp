@@ -8,7 +8,7 @@ serve(async (_req) => {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'onboarding@resend.dev',
+      from: 'hello@smartmail.ink',
       to: 'ikhalil.isa1@gmail.com',
       subject: 'SmartMail test email',
       html: '<p>This is a test email from SmartMail via Resend.</p>',

@@ -295,6 +295,7 @@ export default function ComposeEmail() {
           body: fullBody,
           groupId: selectedGroupId,
           scheduledAt,
+          includeSignature: canUseSignature && includeSignature,
         },
       });
       if (error) throw error;

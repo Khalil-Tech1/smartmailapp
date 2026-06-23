@@ -60,7 +60,11 @@ export default function ComposeEmail() {
   const canUseSignature = tier === 'basic' || tier === 'pro' || tier === 'business';
 
   useEffect(() => {
-    if (user) loadGroups();
+    if (user) {
+      loadGroups();
+      supabase.from('profiles').select('email_signature').eq('user_id', user.id).maybeSingle()
+        .then(({ data }) => setHasSignature(!!data?.email_signature?.trim()));
+    }
   }, [user]);
 
   useEffect(() => {

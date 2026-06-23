@@ -27,10 +27,15 @@ serve(async (req) => {
     )
     if (authError || !user) throw new Error('Unauthorized')
 
-    const { recipients, subject, body, groupId, scheduledAt, voiceNoteTranscript } = await req.json()
-    if (!recipients?.length || !subject || !body) {
+    const { recipients: rawRecipients, subject, body, groupId, scheduledAt, voiceNoteTranscript } = await req.json()
+    if (!rawRecipients?.length || !subject || !body) {
       throw new Error('Missing required fields: recipients, subject, body')
     }
+    // Normalize: accept either ["a@b.com", ...] or [{ email: "a@b.com" }, ...]
+    const recipients: { email: string }[] = rawRecipients.map((r: any) =>
+      typeof r === 'string' ? { email: r } : r
+    ).filter((r: any) => r?.email)
+    if (!recipients.length) throw new Error('No valid recipient emails provided')
 
     const fullBody = voiceNoteTranscript
       ? `${body}\n\n🎙️ Voice Note:\n${voiceNoteTranscript}`

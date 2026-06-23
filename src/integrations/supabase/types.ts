@@ -347,10 +347,12 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          email_signature: string | null
           full_name: string | null
           has_used_trial: boolean
           id: string
           paypal_subscription_id: string | null
+          sender_name: string | null
           subscription_tier: Database["public"]["Enums"]["subscription_tier"]
           trial_end: string | null
           trial_start: string | null
@@ -360,10 +362,12 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          email_signature?: string | null
           full_name?: string | null
           has_used_trial?: boolean
           id?: string
           paypal_subscription_id?: string | null
+          sender_name?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           trial_end?: string | null
           trial_start?: string | null
@@ -373,10 +377,12 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          email_signature?: string | null
           full_name?: string | null
           has_used_trial?: boolean
           id?: string
           paypal_subscription_id?: string | null
+          sender_name?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           trial_end?: string | null
           trial_start?: string | null

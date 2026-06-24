@@ -55,7 +55,7 @@ serve(async (req) => {
     )
     if (authError || !user) throw new Error('Unauthorized')
 
-    const { recipients: rawRecipients, subject, body, groupId, scheduledAt, voiceNoteTranscript, includeSignature } = await req.json()
+    const { recipients: rawRecipients, subject, body, groupId, scheduledAt, voiceNoteTranscript, includeSignature, campaignId, isTest } = await req.json()
     if (!rawRecipients?.length || !subject || !body) {
       throw new Error('Missing required fields: recipients, subject, body')
     }

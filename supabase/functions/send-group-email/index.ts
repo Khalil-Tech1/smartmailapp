@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const SENDER_EMAIL = 'hello@smartmail.ink'
 const DEFAULT_FROM_NAME = 'SmartMail'
+const FN_BASE = `${Deno.env.get('SUPABASE_URL')}/functions/v1`
 
 function buildFrom(senderName: string | null | undefined, tier: string | null | undefined) {
   const allowCustom = tier === 'pro' || tier === 'business'
@@ -15,6 +16,24 @@ function buildFrom(senderName: string | null | undefined, tier: string | null | 
   // Strip any chars that would break the From header
   const safe = name.replace(/[<>"]/g, '').slice(0, 80)
   return `${safe} <${SENDER_EMAIL}>`
+}
+
+// Inject open pixel + rewrite all <a href> links through click tracker.
+// Skips mailto:, tel:, #anchors, and URLs already pointing at our tracker.
+export function injectTracking(html: string, campaignId: string, recipientEmail: string): string {
+  const e = encodeURIComponent(recipientEmail)
+  const openUrl = `${FN_BASE}/track-open?c=${campaignId}&e=${e}`
+  const rewritten = html.replace(/href=(["'])(.*?)\1/gi, (m, q, url) => {
+    if (!url) return m
+    const low = url.toLowerCase()
+    if (low.startsWith('mailto:') || low.startsWith('tel:') || low.startsWith('#')) return m
+    if (low.includes('/functions/v1/track-')) return m
+    const clickUrl = `${FN_BASE}/track-click?c=${campaignId}&e=${e}&url=${encodeURIComponent(url)}`
+    return `href=${q}${clickUrl}${q}`
+  })
+  const pixel = `<img src="${openUrl}" width="1" height="1" alt="" style="display:none;border:0;width:1px;height:1px;" />`
+  if (/<\/body>/i.test(rewritten)) return rewritten.replace(/<\/body>/i, `${pixel}</body>`)
+  return rewritten + pixel
 }
 
 serve(async (req) => {
@@ -36,7 +55,7 @@ serve(async (req) => {
     )
     if (authError || !user) throw new Error('Unauthorized')
 
-    const { recipients: rawRecipients, subject, body, groupId, scheduledAt, voiceNoteTranscript, includeSignature } = await req.json()
+    const { recipients: rawRecipients, subject, body, groupId, scheduledAt, voiceNoteTranscript, includeSignature, campaignId, isTest } = await req.json()
     if (!rawRecipients?.length || !subject || !body) {
       throw new Error('Missing required fields: recipients, subject, body')
     }
@@ -100,13 +119,17 @@ serve(async (req) => {
     const errors: string[] = []
     for (const r of recipients) {
       try {
+        // Per-recipient tracking injection (only for real campaign sends)
+        const perRecipientHtml = (campaignId && !isTest)
+          ? injectTracking(html, campaignId, r.email)
+          : html
         const resp = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${resendApiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ from, to: [r.email], subject, html }),
+          body: JSON.stringify({ from, to: [r.email], subject, html: perRecipientHtml }),
         })
         if (!resp.ok) throw new Error(`${resp.status}: ${await resp.text()}`)
         sentCount++

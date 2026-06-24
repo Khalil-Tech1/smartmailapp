@@ -119,13 +119,17 @@ serve(async (req) => {
     const errors: string[] = []
     for (const r of recipients) {
       try {
+        // Per-recipient tracking injection (only for real campaign sends)
+        const perRecipientHtml = (campaignId && !isTest)
+          ? injectTracking(html, campaignId, r.email)
+          : html
         const resp = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${resendApiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ from, to: [r.email], subject, html }),
+          body: JSON.stringify({ from, to: [r.email], subject, html: perRecipientHtml }),
         })
         if (!resp.ok) throw new Error(`${resp.status}: ${await resp.text()}`)
         sentCount++

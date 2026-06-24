@@ -151,6 +151,7 @@ export default function Campaigns() {
           subject: campaign.subject,
           body: campaign.body,
           groupId: campaign.group_id,
+          campaignId: campaign.id,
         },
       });
       if (error) throw error;

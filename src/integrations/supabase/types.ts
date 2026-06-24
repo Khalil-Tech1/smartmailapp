@@ -156,6 +156,47 @@ export type Database = {
           },
         ]
       }
+      campaign_tracking: {
+        Row: {
+          campaign_id: string
+          clicked_url: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          recipient_email: string
+          tracked_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id: string
+          clicked_url?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          recipient_email: string
+          tracked_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          clicked_url?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          recipient_email?: string
+          tracked_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_tracking_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_campaigns: {
         Row: {
           ab_winner_decided_at: string | null
@@ -176,6 +217,8 @@ export type Database = {
           status: string
           subject: string
           template_id: string | null
+          total_clicked: number
+          total_opened: number
           unsubscribe_count: number | null
           updated_at: string
           user_id: string
@@ -199,6 +242,8 @@ export type Database = {
           status?: string
           subject: string
           template_id?: string | null
+          total_clicked?: number
+          total_opened?: number
           unsubscribe_count?: number | null
           updated_at?: string
           user_id: string
@@ -222,6 +267,8 @@ export type Database = {
           status?: string
           subject?: string
           template_id?: string | null
+          total_clicked?: number
+          total_opened?: number
           unsubscribe_count?: number | null
           updated_at?: string
           user_id?: string

@@ -152,7 +152,7 @@ serve(async (req) => {
                     from: await getFromFor(campaign.user_id),
                     to: member.email,
                     subject: campaign.subject,
-                    html: campaign.body,
+                    html: injectTracking(campaign.body, campaign.id, member.email),
                     reply_to: replyToAddress,
                   }),
                 })

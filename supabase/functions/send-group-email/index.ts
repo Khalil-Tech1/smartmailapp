@@ -67,15 +67,22 @@ serve(async (req) => {
     // Load sender identity from profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('sender_name, email_signature, subscription_tier')
+      .select('sender_name, email_signature, subscription_tier, brand_logo_url, brand_color')
       .eq('user_id', user.id)
       .maybeSingle()
 
     const from = buildFrom(profile?.sender_name, profile?.subscription_tier)
     const tier = profile?.subscription_tier
     const allowSignature = tier === 'basic' || tier === 'pro' || tier === 'business'
+    const allowBranding = tier === 'business'
     const signature = (includeSignature !== false && allowSignature && profile?.email_signature?.trim())
       ? profile.email_signature.trim()
+      : null
+    const brandLogo = allowBranding && profile?.brand_logo_url && /^https?:\/\//i.test(profile.brand_logo_url)
+      ? profile.brand_logo_url
+      : null
+    const brandColor = allowBranding && /^#[0-9a-fA-F]{6}$/.test(profile?.brand_color || '')
+      ? profile!.brand_color
       : null
 
     const fullBody = voiceNoteTranscript
@@ -106,14 +113,27 @@ serve(async (req) => {
          <div style="color:#6b7280;font-size:13px;line-height:1.6;">${signature}</div>`
       : ''
 
+    const headerBg = brandColor || '#1a1a2e'
+    const brandHeader = brandLogo
+      ? `<div style="background:${headerBg};padding:16px 20px;border-radius:12px 12px 0 0;text-align:left;">
+           <img src="${brandLogo}" alt="" style="max-height:40px;max-width:180px;display:block;" />
+         </div>`
+      : (brandColor
+          ? `<div style="background:${headerBg};height:8px;border-radius:12px 12px 0 0;"></div>`
+          : '')
+
     const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#fff;">
-      <div style="padding:30px;border-radius:12px;border:1px solid #e5e7eb;">
-        <h2 style="color:#1a1a2e;margin:0 0 20px;font-size:20px;">${subject}</h2>
-        <div style="color:#4a4a5a;line-height:1.7;white-space:pre-wrap;font-size:15px;">${fullBody}</div>
-        ${signatureBlock}
+      <div style="border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+        ${brandHeader}
+        <div style="padding:30px;">
+          <h2 style="color:#1a1a2e;margin:0 0 20px;font-size:20px;">${subject}</h2>
+          <div style="color:#4a4a5a;line-height:1.7;white-space:pre-wrap;font-size:15px;">${fullBody}</div>
+          ${signatureBlock}
+        </div>
       </div>
       <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:24px;">Sent via SmartMail</p>
     </body></html>`
+
 
     let sentCount = 0
     const errors: string[] = []

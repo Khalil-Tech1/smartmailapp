@@ -10,6 +10,9 @@ export interface TierLimits {
   scheduledSending: boolean;
   emailMarketing: boolean;
   campaignManagement: boolean;
+  customSenderName: boolean;
+  emailSignature: boolean;
+  customBranding: boolean;
   price: number;
   label: string;
 }

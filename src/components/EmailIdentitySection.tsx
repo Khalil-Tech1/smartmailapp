@@ -47,22 +47,27 @@ export default function EmailIdentitySection() {
   const { toast } = useToast();
   const [senderName, setSenderName] = useState('');
   const [signature, setSignature] = useState('');
+  const [brandLogoUrl, setBrandLogoUrl] = useState('');
+  const [brandColor, setBrandColor] = useState('#3B82F6');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const canCustomSender = tier === 'pro' || tier === 'business';
   const canSignature = tier === 'basic' || tier === 'pro' || tier === 'business';
+  const canBranding = tier === 'business';
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('sender_name, email_signature')
+        .select('sender_name, email_signature, brand_logo_url, brand_color')
         .eq('user_id', user.id)
         .maybeSingle();
       setSenderName(data?.sender_name || '');
       setSignature(data?.email_signature || '');
+      setBrandLogoUrl((data as any)?.brand_logo_url || '');
+      setBrandColor((data as any)?.brand_color || '#3B82F6');
       setLoading(false);
     })();
   }, [user]);
@@ -73,6 +78,11 @@ export default function EmailIdentitySection() {
     const payload: any = {};
     if (canCustomSender) payload.sender_name = senderName.trim() || null;
     if (canSignature) payload.email_signature = sanitizeSignature(signature).slice(0, MAX_SIG) || null;
+    if (canBranding) {
+      const url = brandLogoUrl.trim();
+      payload.brand_logo_url = url && /^https?:\/\//i.test(url) ? url : null;
+      payload.brand_color = /^#[0-9a-fA-F]{6}$/.test(brandColor) ? brandColor : null;
+    }
     const { error } = await supabase.from('profiles').update(payload).eq('user_id', user.id);
     setSaving(false);
     if (error) {

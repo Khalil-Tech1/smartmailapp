@@ -12,8 +12,11 @@ const tiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'business'];
 const features: { label: string; key: keyof typeof TIER_LIMITS.free; labelOverride?: Record<string, string> }[] = [
   { label: 'Voice Notes', key: 'voiceNotes' },
   { label: 'Scheduled Sending', key: 'scheduledSending' },
+  { label: 'Email Signature', key: 'emailSignature' },
+  { label: 'Custom Sender Name', key: 'customSenderName' },
   { label: 'Email Marketing Tools', key: 'emailMarketing' },
   { label: 'Campaign Management', key: 'campaignManagement', labelOverride: { business: 'Campaign Archiving' } },
+  { label: 'Custom Branding (Logo & Color)', key: 'customBranding' },
 ];
 
 function formatLimit(val: number | null) {

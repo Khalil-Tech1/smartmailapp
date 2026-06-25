@@ -393,6 +393,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          brand_color: string | null
+          brand_logo_url: string | null
           created_at: string
           email_signature: string | null
           full_name: string | null
@@ -408,6 +410,8 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          brand_color?: string | null
+          brand_logo_url?: string | null
           created_at?: string
           email_signature?: string | null
           full_name?: string | null
@@ -423,6 +427,8 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          brand_color?: string | null
+          brand_logo_url?: string | null
           created_at?: string
           email_signature?: string | null
           full_name?: string | null

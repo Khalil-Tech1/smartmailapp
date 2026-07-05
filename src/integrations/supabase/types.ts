@@ -587,18 +587,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_team_admin: {
-        Args: { _team_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_team_member: {
-        Args: { _team_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_team_owner: {
-        Args: { _team_id: string; _user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       subscription_tier: "free" | "basic" | "pro" | "business" | "enterprise"

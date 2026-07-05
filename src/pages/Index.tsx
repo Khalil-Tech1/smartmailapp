@@ -170,6 +170,9 @@ export default function Index() {
                         )}
                         {limits.voiceNotes && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Voice notes</li>}
                         {limits.scheduledSending && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Scheduled sending</li>}
+                        {limits.emailSignature && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Email signature</li>}
+                        {limits.customSenderName && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Custom sender name</li>}
+                        {limits.customBranding && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Custom branding</li>}
                         {limits.emailMarketing && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Marketing tools</li>}
                         {limits.campaignManagement && t !== 'pro' && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Campaign archiving</li>}
                       </ul>

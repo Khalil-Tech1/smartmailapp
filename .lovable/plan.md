@@ -1,34 +1,15 @@
 ## Problem
-On `/dashboard/teams`, "Invite Member" only inserts a row into `team_invites` — no email is ever sent, so the invitee never knows. Since direct Gmail/SMTP sending from a user's own address isn't working, we need a reliable path that uses the email infrastructure already wired into the project.
 
-## Plan
+Opening the preview in a new tab (the published/preview URL) shows a blank page. Console: `Error: supabaseUrl is required`. Inside the Lovable editor it works because Vite dev server reads `.env` from the sandbox directly.
 
-1. **Send invite emails through Lovable's built-in email system (app emails).**
-   - Add a new app email template `team-invite` in `supabase/functions/_shared/transactional-email-templates/` with: team name, inviter name/email, role, and an "Accept invite" CTA button linking to `/auth?invite=<token>`.
-   - Register it in the templates `registry.ts`.
-   - Prerequisite: email domain + email infra must be set up. If not yet configured, I'll trigger the email domain setup dialog first; otherwise I'll go straight to scaffolding/deploying.
+Root cause: this is a classic Vite stack. The Supabase client reads `import.meta.env.VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`, which Vite inlines **at build time** from `.env`. But `.env` is listed in `.gitignore`, so it isn't included in the build that produces the preview/published bundle → both env vars are `undefined` → `createClient` throws `supabaseUrl is required`.
 
-2. **Add a token to team invites so the link is secure.**
-   - Migration: add `token uuid default gen_random_uuid()`, `expires_at timestamptz default now() + interval '7 days'`, and `status` ('pending' | 'accepted' | 'revoked') to `team_invites` (if not already present).
-   - Add a `get_invite_by_token` RPC (security definer) so the Auth page can look up the invite without being logged in.
+## Fix
 
-3. **Wire the Teams page to send the email.**
-   - After inserting the `team_invites` row, call `supabase.functions.invoke('send-transactional-email', { templateName: 'team-invite', recipientEmail, idempotencyKey: invite.id, templateData: { teamName, inviterEmail, role, acceptUrl } })`.
-   - Show the existing "Invite sent!" toast only on success; show an error toast if the email fails.
+Remove the `.env` entry from `.gitignore` so the managed Supabase env file (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`) is included in builds. These are publishable (anon) values — safe to ship in the browser bundle; RLS is what protects the data.
 
-4. **Accept-invite flow on the Auth page.**
-   - If `?invite=<token>` is present, fetch the invite via the RPC and show "You're being invited to <team> as <role>".
-   - After successful sign-up / sign-in with the matching email, insert a `team_members` row and mark the invite `accepted`.
+### Steps
+1. Edit `.gitignore`: remove the single `.env` line (keep `*.local` etc. as-is).
+2. Ask the user to republish. The next build will bundle the env vars and the preview-in-new-tab / published site will load.
 
-5. **Deploy edge functions** (`send-transactional-email`, plus infra functions if newly scaffolded).
-
-## Technical notes
-- Uses the existing Lovable Cloud email infrastructure (no Gmail/SMTP/Resend dependency).
-- The "from" address will be your verified Lovable sender domain — not the inviter's personal Gmail. The email body will say "<Inviter Name> invited you…" so the invitee knows who sent it.
-- No changes to PayPal/billing or other features.
-
-## Out of scope
-- Sending from the inviter's actual Gmail address (requires per-user Google OAuth — separate, larger task).
-- Resending / revoking invites UI (can add later if you want).
-
-Want me to proceed with this?
+No code changes needed — `src/integrations/supabase/client.ts`, `.env` contents, and everything else stay untouched.

@@ -332,6 +332,13 @@ export default function ComposeEmail() {
         <p className="text-muted-foreground mt-1">Send emails to your groups or selected members.</p>
       </div>
 
+      <div className="mb-6 flex items-start gap-2 text-sm rounded-lg border border-primary/20 bg-primary/5 p-3">
+        <span aria-hidden>📩</span>
+        <p className="text-muted-foreground">
+          <strong className="text-foreground">Deliverability note:</strong> not every email you send will land in the recipient's primary inbox. Some may be routed to <strong>Spam</strong> or <strong>Promotions</strong> depending on the recipient's provider and filters.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Message Card */}

@@ -110,7 +110,7 @@ export default function Teams() {
         toast({ title: 'Team limit reached', description: `Your plan allows up to ${maxMembers} team members.`, variant: 'destructive' });
         return;
       }
-      const email = inviteEmail.trim();
+      const email = inviteEmail.trim().toLowerCase();
       const { error } = await supabase.from('team_invites').insert({
         team_id: team.id,
         email,

@@ -31,11 +31,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isOnTrial = trialEnd ? new Date(trialEnd) > new Date() : false;
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         setTimeout(() => fetchProfile(session.user.id), 0);
+        if (event === 'SIGNED_IN' && session.user.email) {
+          setTimeout(() => processPendingInvites(session.user.email!), 0);
+        }
       } else {
         setTier('free');
         setHasUsedTrial(false);
@@ -97,10 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signUp(email: string, password: string, fullName: string) {
+    const redirectUrl = `${window.location.origin}/dashboard`;
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: redirectUrl,
+      },
     });
     if (error) throw error;
   }
@@ -108,6 +115,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    await processPendingInvites(email);
+  }
+
+  async function processPendingInvites(email: string) {
+    try {
+      const { data: invites } = await supabase
+        .from('team_invites')
+        .select('id, team_id, role')
+        .eq('email', email.toLowerCase())
+        .eq('status', 'pending');
+      if (!invites || invites.length === 0) return;
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return;
+      for (const inv of invites) {
+        const { error: memErr } = await supabase.from('team_members').insert({
+          team_id: inv.team_id,
+          user_id: currentUser.id,
+          role: inv.role,
+          email: email,
+        } as any);
+        if (!memErr) {
+          await supabase.from('team_invites').update({ status: 'accepted' }).eq('id', inv.id);
+        }
+      }
+    } catch (e) {
+      console.error('invite processing failed', e);
+    }
   }
 
   async function signOut() {

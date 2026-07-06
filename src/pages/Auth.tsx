@@ -29,7 +29,7 @@ export default function Auth() {
         await signIn(email, password);
       } else {
         await signUp(email, password, fullName);
-        toast({ title: 'Account created!', description: 'Check your email to verify your account.' });
+        toast({ title: 'Check your email', description: 'We sent you a verification link. Click it to activate your account. Check spam/promotions if not in your primary inbox.' });
       }
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -146,6 +146,10 @@ export default function Auth() {
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </p>
+
+          <div className="mt-6 text-xs text-muted-foreground bg-muted/40 border border-border/50 rounded-lg p-3 text-center">
+            📩 Heads up: verification & app emails may land in your <strong>Spam</strong> or <strong>Promotions</strong> folder. If you don't see it, check there.
+          </div>
         </motion.div>
       </div>
     </div>

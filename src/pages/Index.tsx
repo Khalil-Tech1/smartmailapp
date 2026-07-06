@@ -175,6 +175,7 @@ export default function Index() {
                         {limits.customBranding && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Custom branding</li>}
                         {limits.emailMarketing && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Marketing tools</li>}
                         {limits.campaignManagement && t !== 'pro' && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Campaign archiving</li>}
+                        {t === 'business' && <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-success shrink-0" /> Transfer team ownership</li>}
                       </ul>
                       {limits.price > 0 && (
                         <p className="text-xs text-primary font-medium mb-3 flex items-center gap-1">

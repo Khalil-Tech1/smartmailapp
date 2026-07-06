@@ -146,6 +146,10 @@ export default function Auth() {
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </p>
+
+          <div className="mt-6 text-xs text-muted-foreground bg-muted/40 border border-border/50 rounded-lg p-3 text-center">
+            📩 Heads up: verification & app emails may land in your <strong>Spam</strong> or <strong>Promotions</strong> folder. If you don't see it, check there.
+          </div>
         </motion.div>
       </div>
     </div>

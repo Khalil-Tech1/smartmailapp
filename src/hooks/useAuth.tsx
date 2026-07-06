@@ -31,11 +31,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isOnTrial = trialEnd ? new Date(trialEnd) > new Date() : false;
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         setTimeout(() => fetchProfile(session.user.id), 0);
+        if (event === 'SIGNED_IN' && session.user.email) {
+          setTimeout(() => processPendingInvites(session.user.email!), 0);
+        }
       } else {
         setTier('free');
         setHasUsedTrial(false);

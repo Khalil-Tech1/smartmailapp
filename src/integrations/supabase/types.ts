@@ -495,29 +495,35 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          expires_at: string | null
           id: string
           invited_by: string
           role: Database["public"]["Enums"]["team_role"]
           status: string
           team_id: string
+          token: string | null
         }
         Insert: {
           created_at?: string
           email: string
+          expires_at?: string | null
           id?: string
           invited_by: string
           role?: Database["public"]["Enums"]["team_role"]
           status?: string
           team_id: string
+          token?: string | null
         }
         Update: {
           created_at?: string
           email?: string
+          expires_at?: string | null
           id?: string
           invited_by?: string
           role?: Database["public"]["Enums"]["team_role"]
           status?: string
           team_id?: string
+          token?: string | null
         }
         Relationships: [
           {
@@ -531,6 +537,7 @@ export type Database = {
       }
       team_members: {
         Row: {
+          email: string | null
           id: string
           joined_at: string
           role: Database["public"]["Enums"]["team_role"]
@@ -538,6 +545,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          email?: string | null
           id?: string
           joined_at?: string
           role?: Database["public"]["Enums"]["team_role"]
@@ -545,6 +553,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          email?: string | null
           id?: string
           joined_at?: string
           role?: Database["public"]["Enums"]["team_role"]
@@ -587,7 +596,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_team_invite: {
+        Args: { _token: string }
+        Returns: {
+          team_id: string
+          team_name: string
+        }[]
+      }
+      is_team_member_of_owner: {
+        Args: { _owner: string; _roles: string[] }
+        Returns: boolean
+      }
     }
     Enums: {
       subscription_tier: "free" | "basic" | "pro" | "business" | "enterprise"

@@ -58,8 +58,6 @@ export default function DashboardSidebar({ open, onClose }: DashboardSidebarProp
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {/* Account switcher */}
         {availableTeams.length > 1 && (
           <div className="px-4 pt-3">

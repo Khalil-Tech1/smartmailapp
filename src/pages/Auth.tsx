@@ -20,7 +20,8 @@ export default function Auth() {
   const { toast } = useToast();
   const [params] = useSearchParams();
   const next = safeNext(params.get('next'));
-  const [isLogin, setIsLogin] = useState(true);
+  const initialMode = params.get('mode') === 'signup' ? false : true;
+  const [isLogin, setIsLogin] = useState(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');

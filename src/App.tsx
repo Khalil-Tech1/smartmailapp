@@ -4,9 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ActiveTeamProvider } from "@/hooks/useActiveTeam";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import OAuthConsent from "./pages/OAuthConsent";
+import InviteAccept from "./pages/InviteAccept";
 import DashboardLayout from "./components/DashboardLayout";
 import DashboardOverview from "./pages/DashboardOverview";
 import MailGroups from "./pages/MailGroups";
@@ -27,22 +29,25 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<DashboardOverview />} />
-              <Route path="groups" element={<MailGroups />} />
-              <Route path="compose" element={<ComposeEmail />} />
-              <Route path="history" element={<SentEmails />} />
-              <Route path="campaigns" element={<Campaigns />} />
-              <Route path="teams" element={<Teams />} />
-              <Route path="billing" element={<Billing />} />
-              <Route path="settings" element={<DashboardSettings />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <ActiveTeamProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+              <Route path="/invite" element={<InviteAccept />} />
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<DashboardOverview />} />
+                <Route path="groups" element={<MailGroups />} />
+                <Route path="compose" element={<ComposeEmail />} />
+                <Route path="history" element={<SentEmails />} />
+                <Route path="campaigns" element={<Campaigns />} />
+                <Route path="teams" element={<Teams />} />
+                <Route path="billing" element={<Billing />} />
+                <Route path="settings" element={<DashboardSettings />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ActiveTeamProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

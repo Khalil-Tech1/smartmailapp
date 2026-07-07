@@ -139,7 +139,14 @@ export default function Billing() {
                         </div>
                       );
                     })}
+                    {t === 'business' && (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <Check className="w-3.5 h-3.5 text-success shrink-0" />
+                        <span>Transfer team ownership</span>
+                      </div>
+                    )}
                   </div>
+
 
                   <Button
                     variant={isCurrent ? 'outline' : 'gradient'}

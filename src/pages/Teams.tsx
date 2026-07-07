@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TIER_LIMITS } from '@/lib/tier-limits';
-import { UsersRound, UserPlus, Loader2, Trash2, Crown } from 'lucide-react';
+import { UsersRound, UserPlus, Loader2, Trash2, Crown, MailIcon, RefreshCw, XCircle } from 'lucide-react';
 import TransferOwnership from '@/components/teams/TransferOwnership';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
@@ -21,6 +21,7 @@ export default function Teams() {
 
   const [team, setTeam] = useState<{ id: string; name: string; owner_id: string } | null>(null);
   const [members, setMembers] = useState<any[]>([]);
+  const [invites, setInvites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Invite state
@@ -28,6 +29,7 @@ export default function Teams() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<string>('viewer');
   const [inviting, setInviting] = useState(false);
+  const [inviteActionId, setInviteActionId] = useState<string | null>(null);
 
   // Create team state
   const [teamName, setTeamName] = useState('');
@@ -55,6 +57,13 @@ export default function Teams() {
         .select('*')
         .eq('team_id', ownedTeam.id);
       setMembers(teamMembers || []);
+      const { data: pendingInvites } = await supabase
+        .from('team_invites')
+        .select('*')
+        .eq('team_id', ownedTeam.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      setInvites(pendingInvites || []);
     } else {
       // Check if user is a member of a team
       const { data: membership } = await supabase
@@ -62,7 +71,7 @@ export default function Teams() {
         .select('team_id')
         .eq('user_id', user.id)
         .maybeSingle();
-      
+
       if (membership) {
         const { data: memberTeam } = await supabase
           .from('teams')
@@ -76,10 +85,44 @@ export default function Teams() {
             .select('*')
             .eq('team_id', memberTeam.id);
           setMembers(teamMembers || []);
+          setInvites([]);
         }
       }
     }
     setLoading(false);
+  }
+
+  function roleBlurb(role: string) {
+    if (role === 'admin') return 'manage mail groups, campaigns, and send emails on their behalf';
+    if (role === 'editor') return 'create and edit mail groups and campaigns (but not send)';
+    return 'view mail groups, campaigns, and analytics';
+  }
+
+  async function sendInviteEmail(email: string, role: string, token: string, teamName: string) {
+    const inviterName = user?.user_metadata?.full_name || user?.email || 'A teammate';
+    const acceptUrl = `${window.location.origin}/invite?token=${token}`;
+    const subject = `You have been invited to join ${inviterName}'s SmartMail account`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color:#111;">
+        <h2 style="margin:0 0 12px 0;">You've been invited to join ${inviterName}'s SmartMail account</h2>
+        <p>Hi there,</p>
+        <p>${inviterName} has invited you to join their SmartMail account as a <strong style="text-transform:capitalize;">${role}</strong>.</p>
+        <p>As a ${role}, you will be able to ${roleBlurb(role)}.</p>
+        <p style="margin: 24px 0;">
+          <a href="${acceptUrl}" style="background:#3B82F6;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">Accept invitation</a>
+        </p>
+        <p style="color:#666;font-size:13px;">This invitation expires in 48 hours.</p>
+        <p style="color:#666;font-size:12px;">If you did not expect this invitation, you can safely ignore this email.</p>
+        <p style="color:#666;font-size:12px;">— The SmartMail Team</p>
+      </div>`;
+
+    const { data: sendData, error: sendErr } = await supabase.functions.invoke('send-group-email', {
+      body: { recipients: [email], subject, body: html },
+    });
+    if (sendErr) throw sendErr;
+    if (sendData?.status === 'failed') {
+      throw new Error(sendData?.errors?.[0] || 'Email failed to send');
+    }
   }
 
   async function createTeam() {
@@ -106,55 +149,83 @@ export default function Teams() {
     setInviting(true);
     try {
       const maxMembers = limits.maxTeamMembers || 0;
-      if (members.length >= maxMembers) {
-        toast({ title: 'Team limit reached', description: `Your plan allows up to ${maxMembers} team members.`, variant: 'destructive' });
+      if (members.length + invites.length >= maxMembers) {
+        toast({ title: 'Team limit reached', description: `Your plan allows up to ${maxMembers} team members (including pending invites).`, variant: 'destructive' });
         return;
       }
       const email = inviteEmail.trim().toLowerCase();
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
       const { error } = await supabase.from('team_invites').insert({
         team_id: team.id,
         email,
         role: inviteRole as any,
         invited_by: user.id,
-      });
+        token,
+        expires_at: expiresAt,
+        status: 'pending',
+      } as any);
       if (error) throw error;
 
-      const inviterName = user.user_metadata?.full_name || user.email || 'A teammate';
-      const acceptUrl = `${window.location.origin}/auth?invite_email=${encodeURIComponent(email)}&team=${encodeURIComponent(team.name)}`;
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
-          <h2 style="color:#111;">You've been invited to join ${team.name}</h2>
-          <p>${inviterName} invited you to join their team on SmartMail as <strong>${inviteRole}</strong>.</p>
-          <p style="margin: 24px 0;">
-            <a href="${acceptUrl}" style="background:#3B82F6;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;">Accept invitation</a>
-          </p>
-          <p style="color:#666;font-size:12px;">If you weren't expecting this, you can ignore this email.</p>
-        </div>`;
-
-      const { data: sendData, error: sendErr } = await supabase.functions.invoke('send-group-email', {
-        body: {
-          recipients: [email],
-          subject: `${inviterName} invited you to join ${team.name} on SmartMail`,
-          body: html,
-        },
-      });
-      if (sendErr) throw sendErr;
-      if (sendData?.status === 'failed') {
-        throw new Error(sendData?.errors?.[0] || 'Email failed to send');
-      }
+      await sendInviteEmail(email, inviteRole, token, team.name);
 
       toast({
         title: 'Invite sent!',
-        description: `Email dispatched to ${email}. Note: until you verify a sender domain in Resend, delivery only works to your own Resend account email.`,
+        description: `Invitation email sent to ${email}. It expires in 48 hours.`,
       });
       setInviteEmail('');
       setInviteOpen(false);
+      loadTeam();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
       setInviting(false);
     }
   }
+
+  async function resendInvite(inv: any) {
+    if (!team) return;
+    setInviteActionId(inv.id);
+    try {
+      // Cancel old
+      await supabase.from('team_invites').update({ status: 'cancelled' }).eq('id', inv.id);
+      // Create new
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.from('team_invites').insert({
+        team_id: team.id,
+        email: inv.email,
+        role: inv.role,
+        invited_by: user!.id,
+        token,
+        expires_at: expiresAt,
+        status: 'pending',
+      } as any);
+      if (error) throw error;
+      await sendInviteEmail(inv.email, inv.role, token, team.name);
+      toast({ title: 'Invite resent', description: `New invitation email sent to ${inv.email}.` });
+      loadTeam();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setInviteActionId(null);
+    }
+  }
+
+  async function cancelInvite(inv: any) {
+    setInviteActionId(inv.id);
+    try {
+      const { error } = await supabase.from('team_invites').update({ status: 'cancelled' }).eq('id', inv.id);
+      if (error) throw error;
+      toast({ title: 'Invite cancelled' });
+      loadTeam();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setInviteActionId(null);
+    }
+  }
+
 
   async function removeMember(memberId: string) {
     try {
@@ -304,6 +375,55 @@ export default function Teams() {
               )}
             </CardContent>
           </Card>
+
+          {isOwner && invites.length > 0 && (
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="font-display flex items-center gap-2 text-base">
+                  <MailIcon className="w-4 h-4" /> Pending invitations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {invites.map((inv) => {
+                  const expired = inv.expires_at && new Date(inv.expires_at) < new Date();
+                  return (
+                    <div key={inv.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">{inv.email}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs capitalize">{inv.role}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {expired ? 'Expired' : `Expires ${new Date(inv.expires_at).toLocaleDateString()}`}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={inviteActionId === inv.id}
+                          onClick={() => resendInvite(inv)}
+                          title="Resend invitation"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          disabled={inviteActionId === inv.id}
+                          onClick={() => cancelInvite(inv)}
+                          title="Cancel invitation"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

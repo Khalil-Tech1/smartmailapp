@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { supabase } from '@/integrations/supabase/client';
 import { TIER_LIMITS } from '@/lib/tier-limits';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +19,7 @@ type GroupMember = Tables<'group_members'>;
 
 export default function MailGroups() {
   const { user, tier } = useAuth();
+  const { activeTeam } = useActiveTeam();
   const { toast } = useToast();
   const limits = TIER_LIMITS[tier];
   const [groups, setGroups] = useState<MailGroup[]>([]);
@@ -60,7 +62,7 @@ export default function MailGroups() {
       return;
     }
     const { error } = await supabase.from('mail_groups').insert({
-      user_id: user.id,
+      user_id: activeTeam.ownerId,
       name: newGroupName.trim(),
       description: newGroupDesc.trim() || null,
     });

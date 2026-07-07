@@ -20,7 +20,8 @@ export default function Auth() {
   const { toast } = useToast();
   const [params] = useSearchParams();
   const next = safeNext(params.get('next'));
-  const [isLogin, setIsLogin] = useState(true);
+  const initialMode = params.get('mode') === 'signup' ? false : true;
+  const [isLogin, setIsLogin] = useState(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -37,7 +38,7 @@ export default function Auth() {
       if (isLogin) {
         await signIn(email, password);
       } else {
-        await signUp(email, password, fullName);
+        await signUp(email, password, fullName, `${window.location.origin}${next}`);
         toast({ title: 'Check your email', description: 'We sent you a verification link. Click it to activate your account. Check spam/promotions if not in your primary inbox.' });
       }
     } catch (err: any) {

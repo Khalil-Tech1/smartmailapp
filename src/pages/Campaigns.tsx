@@ -103,7 +103,7 @@ export default function Campaigns() {
     const body = blocksToHtml(blocks, primaryColor);
     try {
       const { error } = await supabase.from('email_campaigns').insert({
-        user_id: user.id,
+        user_id: activeTeam.ownerId,
         name: name.trim(),
         subject: subject.trim(),
         body,

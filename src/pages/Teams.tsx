@@ -375,6 +375,55 @@ export default function Teams() {
               )}
             </CardContent>
           </Card>
+
+          {isOwner && invites.length > 0 && (
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="font-display flex items-center gap-2 text-base">
+                  <MailIcon className="w-4 h-4" /> Pending invitations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {invites.map((inv) => {
+                  const expired = inv.expires_at && new Date(inv.expires_at) < new Date();
+                  return (
+                    <div key={inv.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">{inv.email}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs capitalize">{inv.role}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {expired ? 'Expired' : `Expires ${new Date(inv.expires_at).toLocaleDateString()}`}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={inviteActionId === inv.id}
+                          onClick={() => resendInvite(inv)}
+                          title="Resend invitation"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          disabled={inviteActionId === inv.id}
+                          onClick={() => cancelInvite(inv)}
+                          title="Cancel invitation"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

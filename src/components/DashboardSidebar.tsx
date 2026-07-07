@@ -25,7 +25,11 @@ interface DashboardSidebarProps {
 export default function DashboardSidebar({ open, onClose }: DashboardSidebarProps) {
   const location = useLocation();
   const { user, tier, signOut } = useAuth();
+  const { activeTeam, availableTeams, setActiveTeamId } = useActiveTeam();
   const limits = TIER_LIMITS[tier];
+  const isOwnerContext = activeTeam.role === 'owner';
+  const ownerOnlyPaths = new Set(['/dashboard/billing', '/dashboard/teams', '/dashboard/settings']);
+  const visibleNav = navItems.filter((n) => isOwnerContext || !ownerOnlyPaths.has(n.href));
 
   return (
     <>
@@ -56,7 +60,38 @@ export default function DashboardSidebar({ open, onClose }: DashboardSidebarProp
 
         {/* Nav */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+        {/* Account switcher */}
+        {availableTeams.length > 1 && (
+          <div className="px-4 pt-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border bg-background hover:bg-muted text-sm">
+                  <span className="truncate">{activeTeam.name}</span>
+                  <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {availableTeams.map((t) => (
+                  <DropdownMenuItem
+                    key={t.id}
+                    onClick={() => {
+                      setActiveTeamId(t.id);
+                      window.location.assign('/dashboard');
+                    }}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="truncate">{t.name}</span>
+                    {t.id === activeTeam.id && <Badge variant="secondary" className="text-[10px]">Active</Badge>}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {visibleNav.map((item) => {
             const isActive = location.pathname === item.href;
             const isLocked = item.tierRequired && !(Array.isArray(item.tierRequired) ? item.tierRequired.includes(tier) : tier === item.tierRequired);
 

@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Mail, Users, Send, BarChart3, CreditCard, Settings, LogOut, LayoutDashboard, UsersRound, X } from 'lucide-react';
+import { Mail, Users, Send, BarChart3, CreditCard, Settings, LogOut, LayoutDashboard, UsersRound, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { TIER_LIMITS } from '@/lib/tier-limits';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const navItems: { href: string; icon: any; label: string; tierRequired?: string[] }[] = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },

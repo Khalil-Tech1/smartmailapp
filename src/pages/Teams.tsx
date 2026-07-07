@@ -149,55 +149,83 @@ export default function Teams() {
     setInviting(true);
     try {
       const maxMembers = limits.maxTeamMembers || 0;
-      if (members.length >= maxMembers) {
-        toast({ title: 'Team limit reached', description: `Your plan allows up to ${maxMembers} team members.`, variant: 'destructive' });
+      if (members.length + invites.length >= maxMembers) {
+        toast({ title: 'Team limit reached', description: `Your plan allows up to ${maxMembers} team members (including pending invites).`, variant: 'destructive' });
         return;
       }
       const email = inviteEmail.trim().toLowerCase();
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
       const { error } = await supabase.from('team_invites').insert({
         team_id: team.id,
         email,
         role: inviteRole as any,
         invited_by: user.id,
-      });
+        token,
+        expires_at: expiresAt,
+        status: 'pending',
+      } as any);
       if (error) throw error;
 
-      const inviterName = user.user_metadata?.full_name || user.email || 'A teammate';
-      const acceptUrl = `${window.location.origin}/auth?invite_email=${encodeURIComponent(email)}&team=${encodeURIComponent(team.name)}`;
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
-          <h2 style="color:#111;">You've been invited to join ${team.name}</h2>
-          <p>${inviterName} invited you to join their team on SmartMail as <strong>${inviteRole}</strong>.</p>
-          <p style="margin: 24px 0;">
-            <a href="${acceptUrl}" style="background:#3B82F6;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;">Accept invitation</a>
-          </p>
-          <p style="color:#666;font-size:12px;">If you weren't expecting this, you can ignore this email.</p>
-        </div>`;
-
-      const { data: sendData, error: sendErr } = await supabase.functions.invoke('send-group-email', {
-        body: {
-          recipients: [email],
-          subject: `${inviterName} invited you to join ${team.name} on SmartMail`,
-          body: html,
-        },
-      });
-      if (sendErr) throw sendErr;
-      if (sendData?.status === 'failed') {
-        throw new Error(sendData?.errors?.[0] || 'Email failed to send');
-      }
+      await sendInviteEmail(email, inviteRole, token, team.name);
 
       toast({
         title: 'Invite sent!',
-        description: `Email dispatched to ${email}. Note: until you verify a sender domain in Resend, delivery only works to your own Resend account email.`,
+        description: `Invitation email sent to ${email}. It expires in 48 hours.`,
       });
       setInviteEmail('');
       setInviteOpen(false);
+      loadTeam();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
       setInviting(false);
     }
   }
+
+  async function resendInvite(inv: any) {
+    if (!team) return;
+    setInviteActionId(inv.id);
+    try {
+      // Cancel old
+      await supabase.from('team_invites').update({ status: 'cancelled' }).eq('id', inv.id);
+      // Create new
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.from('team_invites').insert({
+        team_id: team.id,
+        email: inv.email,
+        role: inv.role,
+        invited_by: user!.id,
+        token,
+        expires_at: expiresAt,
+        status: 'pending',
+      } as any);
+      if (error) throw error;
+      await sendInviteEmail(inv.email, inv.role, token, team.name);
+      toast({ title: 'Invite resent', description: `New invitation email sent to ${inv.email}.` });
+      loadTeam();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setInviteActionId(null);
+    }
+  }
+
+  async function cancelInvite(inv: any) {
+    setInviteActionId(inv.id);
+    try {
+      const { error } = await supabase.from('team_invites').update({ status: 'cancelled' }).eq('id', inv.id);
+      if (error) throw error;
+      toast({ title: 'Invite cancelled' });
+      loadTeam();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setInviteActionId(null);
+    }
+  }
+
 
   async function removeMember(memberId: string) {
     try {

@@ -11,7 +11,7 @@ interface AuthContextType {
   hasUsedTrial: boolean;
   trialEnd: string | null;
   isOnTrial: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, redirectTo?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   startTrial: (targetTier: SubscriptionTier) => Promise<boolean>;
@@ -36,9 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         setTimeout(() => fetchProfile(session.user.id), 0);
-        if (event === 'SIGNED_IN' && session.user.email) {
-          setTimeout(() => processPendingInvites(session.user.email!), 0);
-        }
       } else {
         setTier('free');
         setHasUsedTrial(false);

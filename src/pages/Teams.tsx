@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TIER_LIMITS } from '@/lib/tier-limits';
-import { UsersRound, UserPlus, Loader2, Trash2, Crown } from 'lucide-react';
+import { UsersRound, UserPlus, Loader2, Trash2, Crown, MailIcon, RefreshCw, XCircle } from 'lucide-react';
 import TransferOwnership from '@/components/teams/TransferOwnership';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
@@ -21,6 +21,7 @@ export default function Teams() {
 
   const [team, setTeam] = useState<{ id: string; name: string; owner_id: string } | null>(null);
   const [members, setMembers] = useState<any[]>([]);
+  const [invites, setInvites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Invite state
@@ -28,6 +29,7 @@ export default function Teams() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<string>('viewer');
   const [inviting, setInviting] = useState(false);
+  const [inviteActionId, setInviteActionId] = useState<string | null>(null);
 
   // Create team state
   const [teamName, setTeamName] = useState('');

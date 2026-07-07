@@ -57,6 +57,13 @@ export default function Teams() {
         .select('*')
         .eq('team_id', ownedTeam.id);
       setMembers(teamMembers || []);
+      const { data: pendingInvites } = await supabase
+        .from('team_invites')
+        .select('*')
+        .eq('team_id', ownedTeam.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      setInvites(pendingInvites || []);
     } else {
       // Check if user is a member of a team
       const { data: membership } = await supabase
@@ -64,7 +71,7 @@ export default function Teams() {
         .select('team_id')
         .eq('user_id', user.id)
         .maybeSingle();
-      
+
       if (membership) {
         const { data: memberTeam } = await supabase
           .from('teams')
@@ -78,10 +85,44 @@ export default function Teams() {
             .select('*')
             .eq('team_id', memberTeam.id);
           setMembers(teamMembers || []);
+          setInvites([]);
         }
       }
     }
     setLoading(false);
+  }
+
+  function roleBlurb(role: string) {
+    if (role === 'admin') return 'manage mail groups, campaigns, and send emails on their behalf';
+    if (role === 'editor') return 'create and edit mail groups and campaigns (but not send)';
+    return 'view mail groups, campaigns, and analytics';
+  }
+
+  async function sendInviteEmail(email: string, role: string, token: string, teamName: string) {
+    const inviterName = user?.user_metadata?.full_name || user?.email || 'A teammate';
+    const acceptUrl = `${window.location.origin}/invite?token=${token}`;
+    const subject = `You have been invited to join ${inviterName}'s SmartMail account`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color:#111;">
+        <h2 style="margin:0 0 12px 0;">You've been invited to join ${inviterName}'s SmartMail account</h2>
+        <p>Hi there,</p>
+        <p>${inviterName} has invited you to join their SmartMail account as a <strong style="text-transform:capitalize;">${role}</strong>.</p>
+        <p>As a ${role}, you will be able to ${roleBlurb(role)}.</p>
+        <p style="margin: 24px 0;">
+          <a href="${acceptUrl}" style="background:#3B82F6;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">Accept invitation</a>
+        </p>
+        <p style="color:#666;font-size:13px;">This invitation expires in 48 hours.</p>
+        <p style="color:#666;font-size:12px;">If you did not expect this invitation, you can safely ignore this email.</p>
+        <p style="color:#666;font-size:12px;">— The SmartMail Team</p>
+      </div>`;
+
+    const { data: sendData, error: sendErr } = await supabase.functions.invoke('send-group-email', {
+      body: { recipients: [email], subject, body: html },
+    });
+    if (sendErr) throw sendErr;
+    if (sendData?.status === 'failed') {
+      throw new Error(sendData?.errors?.[0] || 'Email failed to send');
+    }
   }
 
   async function createTeam() {

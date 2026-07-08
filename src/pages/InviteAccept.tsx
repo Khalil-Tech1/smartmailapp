@@ -24,9 +24,14 @@ const roleBlurb: Record<string, string> = {
   viewer: 'view mail groups, campaigns, and analytics',
 };
 
+const PENDING_INVITE_KEY = 'smartmail.pendingInviteToken';
+
 export default function InviteAccept() {
   const [params] = useSearchParams();
-  const token = params.get('token') || '';
+  const urlToken = params.get('token') || '';
+  const token =
+    urlToken ||
+    (typeof window !== 'undefined' ? window.localStorage.getItem(PENDING_INVITE_KEY) || '' : '');
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -42,6 +47,12 @@ export default function InviteAccept() {
   useEffect(() => {
     if (authLoading) return;
     (async () => {
+      if (urlToken) {
+        try {
+          window.localStorage.setItem(PENDING_INVITE_KEY, urlToken);
+        } catch {}
+      }
+
       if (!token) {
         setError('This invitation link is invalid or has already been used.');
         setLoading(false);
@@ -135,9 +146,17 @@ export default function InviteAccept() {
       });
       await refresh();
       if (teamId) setActiveTeamId(teamId);
+      try {
+        window.localStorage.removeItem(PENDING_INVITE_KEY);
+      } catch {}
       navigate(`/dashboard${teamId ? `?team=${teamId}` : ''}`, { replace: true });
     } catch (err: any) {
       const msg = inviteErrorMessage(err.message, invitedEmail || invite?.email);
+      if (['invite_not_found', 'invite_cancelled', 'invite_expired'].includes(err.message)) {
+        try {
+          window.localStorage.removeItem(PENDING_INVITE_KEY);
+        } catch {}
+      }
       setError(msg);
       setLoading(false);
       toast({ title: 'Error', description: msg, variant: 'destructive' });
@@ -156,6 +175,9 @@ export default function InviteAccept() {
     setBusy(true);
     try {
       await supabase.from('team_invites').update({ status: 'cancelled' }).eq('id', invite.id);
+      try {
+        window.localStorage.removeItem(PENDING_INVITE_KEY);
+      } catch {}
       navigate('/', { replace: true });
     } finally {
       setBusy(false);

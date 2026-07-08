@@ -24,9 +24,14 @@ const roleBlurb: Record<string, string> = {
   viewer: 'view mail groups, campaigns, and analytics',
 };
 
+const PENDING_INVITE_KEY = 'smartmail.pendingInviteToken';
+
 export default function InviteAccept() {
   const [params] = useSearchParams();
-  const token = params.get('token') || '';
+  const urlToken = params.get('token') || '';
+  const token =
+    urlToken ||
+    (typeof window !== 'undefined' ? window.localStorage.getItem(PENDING_INVITE_KEY) || '' : '');
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -42,6 +47,12 @@ export default function InviteAccept() {
   useEffect(() => {
     if (authLoading) return;
     (async () => {
+      if (urlToken) {
+        try {
+          window.localStorage.setItem(PENDING_INVITE_KEY, urlToken);
+        } catch {}
+      }
+
       if (!token) {
         setError('This invitation link is invalid or has already been used.');
         setLoading(false);
@@ -62,8 +73,10 @@ export default function InviteAccept() {
         .maybeSingle();
 
       if (fetchErr || !data) {
-        setError('This invitation link is invalid or has already been used.');
-        setLoading(false);
+        // Some valid invites may not be readable directly because invite rows are
+        // protected by account-level access rules. The acceptance RPC is the
+        // source of truth and validates the token, expiry, and email securely.
+        await acceptByToken(token);
         return;
       }
 
@@ -73,7 +86,8 @@ export default function InviteAccept() {
       if (row.status === 'cancelled') {
         setError('This invitation link is invalid or has already been used.');
       } else if (row.status === 'accepted') {
-        setError('This invitation has already been accepted. Please log in to access the account.');
+        await acceptByToken(row.token, row.email);
+        return;
       } else if (row.expires_at && new Date(row.expires_at) < new Date()) {
         setError('This invitation has expired. Please ask the account owner to send a new invitation.');
       }
@@ -94,15 +108,36 @@ export default function InviteAccept() {
         setOwnerName(prof?.full_name || team.name);
       }
 
+      if (row.status === 'pending') {
+        const emailMatches =
+          !!user.email && user.email.toLowerCase() === row.email.toLowerCase();
+        if (emailMatches && !(row.expires_at && new Date(row.expires_at) < new Date())) {
+          await acceptByToken(row.token, row.email);
+          return;
+        }
+      }
+
       setLoading(false);
     })();
   }, [token, user, authLoading]);
 
-  async function accept() {
-    if (!invite) return;
+  function inviteErrorMessage(message: string, email?: string) {
+    const map: Record<string, string> = {
+      invite_not_found: 'This invitation link is invalid or has already been used.',
+      invite_cancelled: 'This invitation link is invalid or has already been used.',
+      invite_expired: 'This invitation has expired. Please ask the account owner to send a new invitation.',
+      invite_email_mismatch: email
+        ? `This invite was sent to ${email}. Please sign in with that email.`
+        : 'This invite was sent to a different email address. Please sign in with the invited email.',
+      not_authenticated: 'Please sign in to accept this invitation.',
+    };
+    return map[message] || message || 'Could not accept invitation.';
+  }
+
+  async function acceptByToken(tokenToAccept: string, invitedEmail?: string) {
     setBusy(true);
     try {
-      const { data, error } = await supabase.rpc('accept_team_invite', { _token: invite.token });
+      const { data, error } = await supabase.rpc('accept_team_invite', { _token: tokenToAccept });
       if (error) throw error;
       const teamId = (data as any[])?.[0]?.team_id as string | undefined;
       toast({
@@ -111,20 +146,28 @@ export default function InviteAccept() {
       });
       await refresh();
       if (teamId) setActiveTeamId(teamId);
+      try {
+        window.localStorage.removeItem(PENDING_INVITE_KEY);
+      } catch {}
       navigate(`/dashboard${teamId ? `?team=${teamId}` : ''}`, { replace: true });
     } catch (err: any) {
-      const map: Record<string, string> = {
-        invite_not_found: 'This invitation link is invalid or has already been used.',
-        invite_cancelled: 'This invitation link is invalid or has already been used.',
-        invite_expired: 'This invitation has expired. Please ask the account owner to send a new invitation.',
-        invite_email_mismatch: `This invite was sent to ${invite.email}. Please sign in with that email.`,
-        not_authenticated: 'Please sign in to accept this invitation.',
-      };
-      const msg = map[err.message] || err.message || 'Could not accept invitation.';
+      const msg = inviteErrorMessage(err.message, invitedEmail || invite?.email);
+      if (['invite_not_found', 'invite_cancelled', 'invite_expired'].includes(err.message)) {
+        try {
+          window.localStorage.removeItem(PENDING_INVITE_KEY);
+        } catch {}
+      }
+      setError(msg);
+      setLoading(false);
       toast({ title: 'Error', description: msg, variant: 'destructive' });
     } finally {
       setBusy(false);
     }
+  }
+
+  async function accept() {
+    if (!invite) return;
+    await acceptByToken(invite.token, invite.email);
   }
 
   async function decline() {
@@ -132,6 +175,9 @@ export default function InviteAccept() {
     setBusy(true);
     try {
       await supabase.from('team_invites').update({ status: 'cancelled' }).eq('id', invite.id);
+      try {
+        window.localStorage.removeItem(PENDING_INVITE_KEY);
+      } catch {}
       navigate('/', { replace: true });
     } finally {
       setBusy(false);

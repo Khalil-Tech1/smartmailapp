@@ -62,8 +62,10 @@ export default function InviteAccept() {
         .maybeSingle();
 
       if (fetchErr || !data) {
-        setError('This invitation link is invalid or has already been used.');
-        setLoading(false);
+        // Some valid invites may not be readable directly because invite rows are
+        // protected by account-level access rules. The acceptance RPC is the
+        // source of truth and validates the token, expiry, and email securely.
+        await acceptByToken(token);
         return;
       }
 
@@ -73,7 +75,8 @@ export default function InviteAccept() {
       if (row.status === 'cancelled') {
         setError('This invitation link is invalid or has already been used.');
       } else if (row.status === 'accepted') {
-        setError('This invitation has already been accepted. Please log in to access the account.');
+        await acceptByToken(row.token, row.email);
+        return;
       } else if (row.expires_at && new Date(row.expires_at) < new Date()) {
         setError('This invitation has expired. Please ask the account owner to send a new invitation.');
       }
@@ -94,15 +97,36 @@ export default function InviteAccept() {
         setOwnerName(prof?.full_name || team.name);
       }
 
+      if (row.status === 'pending') {
+        const emailMatches =
+          !!user.email && user.email.toLowerCase() === row.email.toLowerCase();
+        if (emailMatches && !(row.expires_at && new Date(row.expires_at) < new Date())) {
+          await acceptByToken(row.token, row.email);
+          return;
+        }
+      }
+
       setLoading(false);
     })();
   }, [token, user, authLoading]);
 
-  async function accept() {
-    if (!invite) return;
+  function inviteErrorMessage(message: string, email?: string) {
+    const map: Record<string, string> = {
+      invite_not_found: 'This invitation link is invalid or has already been used.',
+      invite_cancelled: 'This invitation link is invalid or has already been used.',
+      invite_expired: 'This invitation has expired. Please ask the account owner to send a new invitation.',
+      invite_email_mismatch: email
+        ? `This invite was sent to ${email}. Please sign in with that email.`
+        : 'This invite was sent to a different email address. Please sign in with the invited email.',
+      not_authenticated: 'Please sign in to accept this invitation.',
+    };
+    return map[message] || message || 'Could not accept invitation.';
+  }
+
+  async function acceptByToken(tokenToAccept: string, invitedEmail?: string) {
     setBusy(true);
     try {
-      const { data, error } = await supabase.rpc('accept_team_invite', { _token: invite.token });
+      const { data, error } = await supabase.rpc('accept_team_invite', { _token: tokenToAccept });
       if (error) throw error;
       const teamId = (data as any[])?.[0]?.team_id as string | undefined;
       toast({
@@ -113,18 +137,18 @@ export default function InviteAccept() {
       if (teamId) setActiveTeamId(teamId);
       navigate(`/dashboard${teamId ? `?team=${teamId}` : ''}`, { replace: true });
     } catch (err: any) {
-      const map: Record<string, string> = {
-        invite_not_found: 'This invitation link is invalid or has already been used.',
-        invite_cancelled: 'This invitation link is invalid or has already been used.',
-        invite_expired: 'This invitation has expired. Please ask the account owner to send a new invitation.',
-        invite_email_mismatch: `This invite was sent to ${invite.email}. Please sign in with that email.`,
-        not_authenticated: 'Please sign in to accept this invitation.',
-      };
-      const msg = map[err.message] || err.message || 'Could not accept invitation.';
+      const msg = inviteErrorMessage(err.message, invitedEmail || invite?.email);
+      setError(msg);
+      setLoading(false);
       toast({ title: 'Error', description: msg, variant: 'destructive' });
     } finally {
       setBusy(false);
     }
+  }
+
+  async function accept() {
+    if (!invite) return;
+    await acceptByToken(invite.token, invite.email);
   }
 
   async function decline() {

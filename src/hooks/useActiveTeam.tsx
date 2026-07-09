@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import type { SubscriptionTier } from '@/lib/tier-limits';
 
 export type ActiveTeamRole = 'owner' | 'admin' | 'editor' | 'viewer';
 
@@ -19,12 +20,16 @@ interface ActiveTeamContextType {
   activeTeam: AvailableTeam;
   setActiveTeamId: (id: string) => void;
   refresh: () => Promise<void>;
+  /** Owner's current subscription tier for the active team (null while loading, or for personal context). */
+  ownerTier: SubscriptionTier | null;
+  ownerTrialEnd: string | null;
+  isOwnerOnTrial: boolean;
 }
 
 const ActiveTeamContext = createContext<ActiveTeamContextType | undefined>(undefined);
 const STORAGE_KEY = 'smartmail.activeTeam';
 
-function personalTeam(userId: string, email?: string | null): AvailableTeam {
+function personalTeam(userId: string, _email?: string | null): AvailableTeam {
   return {
     id: 'personal',
     teamId: null,
@@ -35,11 +40,19 @@ function personalTeam(userId: string, email?: string | null): AvailableTeam {
   };
 }
 
+function normalizeTier(raw: string | null | undefined, trialEnd: string | null | undefined): SubscriptionTier {
+  const t = (raw === 'enterprise' ? 'business' : raw || 'free') as SubscriptionTier;
+  if (trialEnd && new Date(trialEnd) < new Date() && t !== 'free') return 'free';
+  return t;
+}
+
 export function ActiveTeamProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [availableTeams, setAvailableTeams] = useState<AvailableTeam[]>([]);
   const [activeId, setActiveIdState] = useState<string>('personal');
   const [loading, setLoading] = useState(true);
+  const [ownerTier, setOwnerTier] = useState<SubscriptionTier | null>(null);
+  const [ownerTrialEnd, setOwnerTrialEnd] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user) {
@@ -115,9 +128,49 @@ export function ActiveTeamProvider({ children }: { children: ReactNode }) {
   const activeTeam =
     availableTeams.find((t) => t.id === activeId) || personalTeam(user?.id || '', user?.email);
 
+  // Fetch the owner's tier for the active (non-personal) team. Refresh when
+  // active team changes or the window regains focus so downgrades propagate.
+  const fetchOwnerTier = useCallback(async () => {
+    if (activeTeam.role === 'owner' || !activeTeam.ownerId) {
+      setOwnerTier(null);
+      setOwnerTrialEnd(null);
+      return;
+    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('subscription_tier, trial_end')
+      .eq('user_id', activeTeam.ownerId)
+      .maybeSingle();
+    setOwnerTier(normalizeTier(data?.subscription_tier as any, data?.trial_end as any));
+    setOwnerTrialEnd((data?.trial_end as any) ?? null);
+  }, [activeTeam.role, activeTeam.ownerId]);
+
+  useEffect(() => {
+    fetchOwnerTier();
+  }, [fetchOwnerTier]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      fetchOwnerTier();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [fetchOwnerTier]);
+
+  const isOwnerOnTrial = ownerTrialEnd ? new Date(ownerTrialEnd) > new Date() : false;
+
   return (
     <ActiveTeamContext.Provider
-      value={{ loading, availableTeams, activeTeam, setActiveTeamId, refresh: load }}
+      value={{
+        loading,
+        availableTeams,
+        activeTeam,
+        setActiveTeamId,
+        refresh: load,
+        ownerTier,
+        ownerTrialEnd,
+        isOwnerOnTrial,
+      }}
     >
       {children}
     </ActiveTeamContext.Provider>

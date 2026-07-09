@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Mail, Users, Send, BarChart3, CreditCard, Settings, LogOut, LayoutDashboard, UsersRound, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
-import { TIER_LIMITS } from '@/lib/tier-limits';
+import { useEffectiveTier } from '@/hooks/useEffectiveTier';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -24,10 +24,9 @@ interface DashboardSidebarProps {
 
 export default function DashboardSidebar({ open, onClose }: DashboardSidebarProps) {
   const location = useLocation();
-  const { user, tier, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { activeTeam, availableTeams, setActiveTeamId } = useActiveTeam();
-  const limits = TIER_LIMITS[tier];
-  const isOwnerContext = activeTeam.role === 'owner';
+  const { tier, limits, isOwnerContext } = useEffectiveTier();
   const ownerOnlyPaths = new Set(['/dashboard/billing', '/dashboard/teams', '/dashboard/settings']);
   const visibleNav = navItems.filter((n) => isOwnerContext || !ownerOnlyPaths.has(n.href));
 

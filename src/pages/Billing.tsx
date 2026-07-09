@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
 import { Check, X, Gift, Crown } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,7 +28,14 @@ function formatLimit(val: number | null) {
 
 export default function Billing() {
   const { tier, hasUsedTrial, isOnTrial, trialEnd, startTrial } = useAuth();
+  const { activeTeam } = useActiveTeam();
   const { toast } = useToast();
+
+  // Billing always manages the signed-in user's own subscription.
+  // If the user is viewing someone else's account, kick back to dashboard.
+  if (activeTeam.role !== 'owner') {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   async function handleUpgrade(targetTier: SubscriptionTier) {
     if (targetTier === 'free') return;

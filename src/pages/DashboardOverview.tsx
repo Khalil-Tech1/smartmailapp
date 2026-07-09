@@ -4,12 +4,12 @@ import { Users, Mail, Send, TrendingUp, Calendar, BarChart3 } from 'lucide-react
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { TIER_LIMITS } from '@/lib/tier-limits';
+import { useEffectiveTier } from '@/hooks/useEffectiveTier';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function DashboardOverview() {
-  const { user, tier } = useAuth();
-  const limits = TIER_LIMITS[tier];
+  const { user } = useAuth();
+  const { limits } = useEffectiveTier();
   const [stats, setStats] = useState({ groups: 0, members: 0, sent: 0, scheduled: 0 });
   const [weeklyData, setWeeklyData] = useState<{ day: string; count: number }[]>([]);
   const [statusData, setStatusData] = useState<{ name: string; value: number }[]>([]);

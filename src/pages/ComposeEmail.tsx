@@ -11,16 +11,16 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { TIER_LIMITS } from '@/lib/tier-limits';
+import { useEffectiveTier } from '@/hooks/useEffectiveTier';
 import type { Tables } from '@/integrations/supabase/types';
 
 type MailGroup = Tables<'mail_groups'>;
 type GroupMember = Tables<'group_members'>;
 
 export default function ComposeEmail() {
-  const { user, tier } = useAuth();
+  const { user } = useAuth();
+  const { tier, limits } = useEffectiveTier();
   const { toast } = useToast();
-  const limits = TIER_LIMITS[tier];
 
   const [groups, setGroups] = useState<MailGroup[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');

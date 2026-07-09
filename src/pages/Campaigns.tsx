@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
+import { useEffectiveTier } from '@/hooks/useEffectiveTier';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -47,8 +48,9 @@ function LockedOverlay() {
 }
 
 export default function Campaigns() {
-  const { user, tier } = useAuth();
+  const { user } = useAuth();
   const { activeTeam } = useActiveTeam();
+  const { tier } = useEffectiveTier();
   const { toast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [groups, setGroups] = useState<MailGroup[]>([]);

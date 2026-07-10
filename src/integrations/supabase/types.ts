@@ -609,10 +609,14 @@ export type Database = {
           team_name: string
         }[]
       }
+      cancel_trial: { Args: never; Returns: undefined }
+      expire_trial_if_needed: { Args: never; Returns: undefined }
       is_team_member_of_owner: {
         Args: { _owner: string; _roles: string[] }
         Returns: boolean
       }
+      resume_trial: { Args: never; Returns: undefined }
+      start_trial: { Args: { _target_tier: string }; Returns: undefined }
     }
     Enums: {
       subscription_tier: "free" | "basic" | "pro" | "business" | "enterprise"

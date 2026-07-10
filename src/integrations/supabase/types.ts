@@ -404,6 +404,8 @@ export type Database = {
           sender_name: string | null
           subscription_tier: Database["public"]["Enums"]["subscription_tier"]
           trial_end: string | null
+          trial_paused_remaining_seconds: number | null
+          trial_paused_tier: string | null
           trial_start: string | null
           updated_at: string
           user_id: string
@@ -421,6 +423,8 @@ export type Database = {
           sender_name?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           trial_end?: string | null
+          trial_paused_remaining_seconds?: number | null
+          trial_paused_tier?: string | null
           trial_start?: string | null
           updated_at?: string
           user_id: string
@@ -438,6 +442,8 @@ export type Database = {
           sender_name?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           trial_end?: string | null
+          trial_paused_remaining_seconds?: number | null
+          trial_paused_tier?: string | null
           trial_start?: string | null
           updated_at?: string
           user_id?: string

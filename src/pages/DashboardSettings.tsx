@@ -2,23 +2,22 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Loader2, AlertTriangle, Users } from 'lucide-react';
+import { Loader2, Users, PauseCircle, PlayCircle, Clock } from 'lucide-react';
 import TransferOwnership from '@/components/teams/TransferOwnership';
 import EmailIdentitySection from '@/components/EmailIdentitySection';
+import { TIER_LIMITS, type SubscriptionTier } from '@/lib/tier-limits';
 
 export default function DashboardSettings() {
-  const { user, tier, signOut } = useAuth();
+  const { user, tier, isOnTrial, trialEnd, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [fullName, setFullName] = useState('');
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteReason, setDeleteReason] = useState('');
-  const [deleting, setDeleting] = useState(false);
+  const [trialBusy, setTrialBusy] = useState(false);
+  const [pausedTier, setPausedTier] = useState<SubscriptionTier | null>(null);
+  const [pausedRemainingSec, setPausedRemainingSec] = useState<number | null>(null);
 
   // Team state (Business tier)
   const [team, setTeam] = useState<{ id: string; owner_id: string } | null>(null);
@@ -27,6 +26,21 @@ export default function DashboardSettings() {
   useEffect(() => {
     if (user && tier === 'business') loadTeam();
   }, [user, tier]);
+
+  useEffect(() => {
+    if (user) loadPausedTrial();
+  }, [user, tier, isOnTrial]);
+
+  async function loadPausedTrial() {
+    if (!user) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('trial_paused_tier, trial_paused_remaining_seconds')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    setPausedTier(((data as any)?.trial_paused_tier as SubscriptionTier) ?? null);
+    setPausedRemainingSec(((data as any)?.trial_paused_remaining_seconds as number) ?? null);
+  }
 
   async function loadTeam() {
     if (!user) return;
@@ -48,27 +62,63 @@ export default function DashboardSettings() {
     }
   }
 
-  async function handleDeleteAccount() {
-    if (!user || !deleteReason.trim()) {
-      toast({ title: 'Please provide a reason', description: 'We need to know why you want to delete your account.', variant: 'destructive' });
-      return;
-    }
-    setDeleting(true);
+  async function cancelTrial() {
+    if (!user || !isOnTrial || !trialEnd) return;
+    setTrialBusy(true);
     try {
-      const { error } = await supabase.from('account_deletion_requests').insert({
-        user_id: user.id,
-        reason: deleteReason.trim(),
-      });
+      const remainingMs = new Date(trialEnd).getTime() - Date.now();
+      const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
+      const { error } = await supabase.from('profiles').update({
+        subscription_tier: 'free',
+        trial_end: null,
+        trial_paused_tier: tier,
+        trial_paused_remaining_seconds: remainingSec,
+      } as any).eq('user_id', user.id);
       if (error) throw error;
-      toast({ title: 'Account deletion requested', description: 'Your account will be deleted within 48 hours. You will be signed out now.' });
-      setShowDeleteDialog(false);
-      setTimeout(() => signOut(), 2000);
+      toast({ title: 'Trial paused', description: 'You can resume it any time from settings.' });
+      await refreshProfile();
+      await loadPausedTrial();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
-      setDeleting(false);
+      setTrialBusy(false);
     }
   }
+
+  async function resumeTrial() {
+    if (!user || !pausedTier || pausedRemainingSec == null) return;
+    setTrialBusy(true);
+    try {
+      const now = new Date();
+      const end = new Date(now.getTime() + pausedRemainingSec * 1000);
+      const { error } = await supabase.from('profiles').update({
+        subscription_tier: pausedTier,
+        trial_start: now.toISOString(),
+        trial_end: end.toISOString(),
+        trial_paused_tier: null,
+        trial_paused_remaining_seconds: null,
+      } as any).eq('user_id', user.id);
+      if (error) throw error;
+      toast({ title: 'Trial resumed', description: `Welcome back to ${TIER_LIMITS[pausedTier].label}.` });
+      await refreshProfile();
+      await loadPausedTrial();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setTrialBusy(false);
+    }
+  }
+
+  function formatRemaining(sec: number): string {
+    const days = Math.floor(sec / 86400);
+    const hours = Math.floor((sec % 86400) / 3600);
+    if (days > 0) return `${days} day${days === 1 ? '' : 's'}${hours ? ` ${hours}h` : ''}`;
+    if (hours > 0) return `${hours} hour${hours === 1 ? '' : 's'}`;
+    const mins = Math.max(1, Math.floor(sec / 60));
+    return `${mins} minute${mins === 1 ? '' : 's'}`;
+  }
+
+  const canResume = !isOnTrial && pausedTier && pausedRemainingSec != null && pausedRemainingSec > 0;
 
   return (
     <div>
@@ -96,7 +146,6 @@ export default function DashboardSettings() {
       <EmailIdentitySection />
 
       {/* Transfer Ownership - Business tier only */}
-
       {tier === 'business' && team && (
         <Card className="max-w-lg border-border/50 mb-6">
           <CardHeader>
@@ -118,56 +167,43 @@ export default function DashboardSettings() {
         </Card>
       )}
 
-      <Card className="max-w-lg border-destructive/30">
-        <CardHeader>
-          <CardTitle className="font-display text-destructive flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" /> Danger Zone
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Once you delete your account, all your data will be permanently removed. This action cannot be undone.
-          </p>
-          <Dialog open={showDeleteDialog} onOpenChange={v => { setShowDeleteDialog(v); if (!v) setDeleteReason(''); }}>
-            <DialogTrigger asChild>
-              <Button variant="destructive" className="gap-2">
-                <Trash2 className="w-4 h-4" /> Delete Account
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="font-display text-destructive">Delete Your Account</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
+      {/* Free trial management */}
+      {(isOnTrial || canResume) && (
+        <Card className="max-w-lg border-border/50 mb-6">
+          <CardHeader>
+            <CardTitle className="font-display flex items-center gap-2">
+              <Clock className="w-5 h-5" /> Free Trial
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isOnTrial && trialEnd && (
+              <>
                 <p className="text-sm text-muted-foreground">
-                  We're sorry to see you go. Please tell us why you're leaving so we can improve.
+                  You're on a <strong>{TIER_LIMITS[tier].label}</strong> free trial with{' '}
+                  <strong>{formatRemaining(Math.max(0, Math.floor((new Date(trialEnd).getTime() - Date.now()) / 1000)))}</strong>{' '}
+                  remaining. Cancel to switch back to Free — you can pick up right where you left off later.
                 </p>
-                <div className="space-y-2">
-                  <Label>Reason for leaving <span className="text-destructive">*</span></Label>
-                  <Textarea
-                    placeholder="Please tell us why you want to delete your account..."
-                    value={deleteReason}
-                    onChange={e => setDeleteReason(e.target.value)}
-                    className="min-h-[100px]"
-                  />
-                </div>
-                <div className="flex gap-3 justify-end">
-                  <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteAccount}
-                    disabled={deleting || !deleteReason.trim()}
-                    className="gap-2"
-                  >
-                    {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                    Confirm Delete
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardContent>
-      </Card>
+                <Button variant="outline" onClick={cancelTrial} disabled={trialBusy} className="gap-2">
+                  {trialBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <PauseCircle className="w-4 h-4" />}
+                  Cancel free trial
+                </Button>
+              </>
+            )}
+            {!isOnTrial && canResume && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  You paused your <strong>{TIER_LIMITS[pausedTier!].label}</strong> trial with{' '}
+                  <strong>{formatRemaining(pausedRemainingSec!)}</strong> left. Resume any time to continue where you stopped.
+                </p>
+                <Button variant="gradient" onClick={resumeTrial} disabled={trialBusy} className="gap-2">
+                  {trialBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <PlayCircle className="w-4 h-4" />}
+                  Continue free trial
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

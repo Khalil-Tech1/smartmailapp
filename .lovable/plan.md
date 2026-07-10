@@ -1,40 +1,41 @@
-## Goal
-When an invited team member switches into an owner's account (via the sidebar account switcher), the app should behave as if they're on the **owner's current tier**. When they switch back to "My Account," they see their own personal tier (Free by default). Role gates (admin/editor/viewer) continue to apply on top.
+## Root cause
 
-## What's wrong today
-`useAuth().tier` reads the signed-in user's own `profiles.subscription_tier`. Every gate in the app (`DashboardSidebar`, `Billing`, `Campaigns`, `Teams`, `ComposeEmail`, etc.) reads `tier` from `useAuth`, so an invitee sees Free even while operating in a Pro owner's account.
+The tier-inheritance code from last turn is correct, but the invitee's browser can't actually read the owner's tier. The `profiles` table only has one SELECT policy:
 
-## Approach
+```
+Users can view their own profile — auth.uid() = user_id
+```
 
-### 1. Expose the owner's tier via `ActiveTeamProvider`
-- Extend `useActiveTeam` to also fetch the owner's `subscription_tier` + `trial_end` from `profiles` whenever the active team changes (and on `refresh()`).
-- Add `ownerTier`, `ownerTrialEnd`, `isOwnerOnTrial` to the context. Handle expired trials the same way `useAuth.fetchProfile` does (treat as free).
-- Re-fetch on window focus so downgrades propagate quickly (matches "owner's current tier always").
+So when `useActiveTeam` runs:
 
-### 2. New `useEffectiveTier()` hook
-- Returns `{ tier, limits, role, isOwnerContext, isPersonalContext }`.
-- If `activeTeam.role === 'owner'` → use `useAuth().tier` (personal account, unchanged).
-- Otherwise → use `activeTeam.ownerTier` (invitee viewing the owner's workspace).
-- Central place so we don't touch every consumer twice.
+```ts
+supabase.from('profiles').select('subscription_tier, trial_end').eq('user_id', activeTeam.ownerId)
+```
 
-### 3. Swap tier reads in gated UI
-Replace `useAuth().tier` with `useEffectiveTier().tier` in:
-- `src/components/DashboardSidebar.tsx` (nav lock badges, tier label pill)
-- `src/pages/DashboardOverview.tsx`, `Campaigns.tsx`, `MailGroups.tsx`, `ComposeEmail.tsx`, `SentEmails.tsx`, `Teams.tsx`, `DashboardSettings.tsx` — anywhere tier-based feature gates or quota limits are read.
-- Leave `useAuth().tier` in place for **personal-only** surfaces: `Billing.tsx` (shows/edits the signed-in user's own subscription), account deletion, trial-start button.
+RLS silently returns no rows. `ownerTier` stays `null`, `useEffectiveTier()` falls back to `'free'`, and `Campaigns.tsx` renders the "Pro Plan Required" locked overlay even though the owner is on Pro.
 
-### 4. Keep role gates
-No change to role logic. `useEffectiveTier` still returns `activeTeam.role`, and existing checks (owner-only routes in the sidebar, `is_team_member_of_owner` RLS) continue to enforce what an admin/editor/viewer can do inside the owner's account.
+The same silent-empty read is why the account switcher shows "Owner's Account" instead of the owner's real name — the owner-profile lookup in `useActiveTeam.load()` is blocked too.
 
-### 5. Billing page guard
-`Billing.tsx` should only manage the signed-in user's own plan. When `activeTeam.role !== 'owner'` we already hide it from the sidebar; also add a defensive redirect from `Billing` to `/dashboard` if the active context is not personal, so a direct URL visit doesn't let a member "manage" someone else's plan.
+## Fix
+
+Add one RLS policy on `public.profiles` that lets a team member read the profile row of an account they belong to. Reuse the existing `is_team_member_of_owner` security-definer function so we don't introduce recursion.
+
+```sql
+CREATE POLICY "Team members can view owner profile"
+ON public.profiles
+FOR SELECT
+TO authenticated
+USING (public.is_team_member_of_owner(user_id, ARRAY['admin','editor','viewer']));
+```
+
+That's the whole change. No client code touched — the existing `useActiveTeam` fetch and `useEffectiveTier` hook will now see the owner's `subscription_tier` / `trial_end` and unlock Pro/Business features for members in the owner's workspace (with role gates still applied by the other tables' policies).
 
 ## Out of scope
-- No DB/schema/RLS changes — RLS already scopes data by `owner_id` via `is_team_member_of_owner`, so features unlock purely on the client based on the owner's tier. Server-side enforcement (edge functions checking owner tier before send) can be a follow-up if needed.
-- No changes to invite acceptance, ownership transfer, or personal billing behavior.
+
+- No new columns, no schema changes, no code edits.
+- Doesn't broaden profile visibility beyond members of the same account (the definer function already scopes to `team_members` rows the caller belongs to).
+- Personal-account isolation is unchanged: members querying their own profile still hit the existing self-policy; owner-tier lookup is skipped entirely when `activeTeam.role === 'owner'`.
 
 ## Files touched
-- `src/hooks/useActiveTeam.tsx` — fetch + expose `ownerTier`
-- `src/hooks/useEffectiveTier.ts` — new hook
-- `src/components/DashboardSidebar.tsx`
-- `src/pages/DashboardOverview.tsx`, `Campaigns.tsx`, `MailGroups.tsx`, `ComposeEmail.tsx`, `SentEmails.tsx`, `Teams.tsx`, `DashboardSettings.tsx`, `Billing.tsx` (redirect guard only)
+
+- one new Supabase migration adding the policy above.

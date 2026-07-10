@@ -65,8 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data) {
       // Check if trial has expired
       if (data.trial_end && new Date(data.trial_end) < new Date() && data.subscription_tier !== 'free') {
-        // Trial expired — revert to free
-        await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('user_id', userId);
+        // Trial expired — revert to free via server-side RPC
+        await supabase.rpc('expire_trial_if_needed' as any);
         setTier('free');
       } else {
         const dbTier = data.subscription_tier;
@@ -83,14 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function startTrial(targetTier: SubscriptionTier): Promise<boolean> {
     if (!user || hasUsedTrial) return false;
-    const now = new Date();
-    const end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
-    const { error } = await supabase.from('profiles').update({
-      subscription_tier: targetTier,
-      has_used_trial: true,
-      trial_start: now.toISOString(),
-      trial_end: end.toISOString(),
-    }).eq('user_id', user.id);
+    const { error } = await supabase.rpc('start_trial' as any, { _target_tier: targetTier });
     if (error) return false;
     await fetchProfile(user.id);
     return true;

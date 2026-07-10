@@ -83,14 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function startTrial(targetTier: SubscriptionTier): Promise<boolean> {
     if (!user || hasUsedTrial) return false;
-    const now = new Date();
-    const end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
-    const { error } = await supabase.from('profiles').update({
-      subscription_tier: targetTier,
-      has_used_trial: true,
-      trial_start: now.toISOString(),
-      trial_end: end.toISOString(),
-    }).eq('user_id', user.id);
+    const { error } = await supabase.rpc('start_trial' as any, { _target_tier: targetTier });
     if (error) return false;
     await fetchProfile(user.id);
     return true;

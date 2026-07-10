@@ -65,8 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data) {
       // Check if trial has expired
       if (data.trial_end && new Date(data.trial_end) < new Date() && data.subscription_tier !== 'free') {
-        // Trial expired — revert to free
-        await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('user_id', userId);
+        // Trial expired — revert to free via server-side RPC
+        await supabase.rpc('expire_trial_if_needed' as any);
         setTier('free');
       } else {
         const dbTier = data.subscription_tier;

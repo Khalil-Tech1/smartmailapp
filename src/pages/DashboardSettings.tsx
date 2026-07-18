@@ -66,7 +66,14 @@ export default function DashboardSettings() {
     if (!user || !isOnTrial || !trialEnd) return;
     setTrialBusy(true);
     try {
-      const { error } = await supabase.rpc('cancel_trial' as any);
+      const remainingMs = new Date(trialEnd).getTime() - Date.now();
+      const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
+      const { error } = await supabase.from('profiles').update({
+        subscription_tier: 'free',
+        trial_end: null,
+        trial_paused_tier: tier,
+        trial_paused_remaining_seconds: remainingSec,
+      } as any).eq('user_id', user.id);
       if (error) throw error;
       toast({ title: 'Trial paused', description: 'You can resume it any time from settings.' });
       await refreshProfile();
@@ -82,7 +89,15 @@ export default function DashboardSettings() {
     if (!user || !pausedTier || pausedRemainingSec == null) return;
     setTrialBusy(true);
     try {
-      const { error } = await supabase.rpc('resume_trial' as any);
+      const now = new Date();
+      const end = new Date(now.getTime() + pausedRemainingSec * 1000);
+      const { error } = await supabase.from('profiles').update({
+        subscription_tier: pausedTier,
+        trial_start: now.toISOString(),
+        trial_end: end.toISOString(),
+        trial_paused_tier: null,
+        trial_paused_remaining_seconds: null,
+      } as any).eq('user_id', user.id);
       if (error) throw error;
       toast({ title: 'Trial resumed', description: `Welcome back to ${TIER_LIMITS[pausedTier].label}.` });
       await refreshProfile();
